@@ -1,7 +1,7 @@
 // ⚠️⚠️⚠️ 開発用のコード ⚠️⚠️⚠️
 // Supabase の鍵がないとき（local.properties に書いていないとき）に、本物の対戦相手の代わりに使う。
 // 本番では使わないが、鍵を持っていないメンバーの環境で対戦画面が動かなくなるので、iOS と同じく残しておく。
-// 削除するときは、MainActivity の battleService() で DummyBattleService を選んでいる所も一緒に消す。
+// 削除するときは、MainActivity の battleService で DummyBattleService を選んでいる所も一緒に消す。
 package com.example.sunshine.service
 
 import com.example.sunshine.model.BattleAction

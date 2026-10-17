@@ -15,6 +15,9 @@ import com.example.sunshine.model.FighterID
 import com.example.sunshine.model.Monster
 import com.example.sunshine.service.BattleService
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
@@ -147,6 +150,17 @@ class BattleViewModel(private val service: BattleService) : ViewModel() {
         lastHitOnMe = null
         myMonster = Monster.all.random()
         phase = Phase.Lobby
+    }
+
+    /**
+     * 画面を閉じたとき（戻るボタンなど）に、対戦から抜ける
+     * 抜けないと対戦が playing のまま残り、相手は 60 秒待ってからやっと気づく。Realtime の購読も残り続ける
+     * （iOS はタブの画面で閉じることがないので、Android だけにある）
+     * viewModelScope はこの時点でもう止まっているので、画面と関係なく最後まで動く GlobalScope で行う
+     */
+    @OptIn(DelicateCoroutinesApi::class)
+    override fun onCleared() {
+        GlobalScope.launch(Dispatchers.Main) { service.leave() }
     }
 
     private fun startBattle(opponentMonster: Monster) {

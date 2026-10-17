@@ -32,10 +32,12 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject
@@ -301,13 +303,25 @@ class SupabaseBattleService(url: String, anonKey: String) : BattleService {
         listenJob = scope.launch {
             battleUpdates.onEach { update -> update.decodeRecordOrNull<BattleRow>()?.let(::receive) }.launchIn(this)
             actionInserts.onEach { insert -> insert.decodeRecordOrNull<ActionRow>()?.let(::receive) }.launchIn(this)
+            // subscribe は接続に失敗しても例外を出さず、つながるまで裏で再接続を続ける
+            // そのため、しばらく購読できないときにログを出して気づけるようにする
+            launch {
+                val subscribed = withTimeoutOrNull(REALTIME_WARNING_DELAY_MILLIS) {
+                    channel.status.first { it == RealtimeChannel.Status.SUBSCRIBED }
+                }
+                if (subscribed == null) {
+                    // ⚠️ 開発用：原因を調べるためのログ。リリースするときに消してよい
+                    Log.w(TAG, "Realtime に接続できていません。データベースの定期確認だけで続けます")
+                }
+            }
             try {
                 channel.subscribe()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                // 設定の誤りなどで購読そのものができないとき。アプリを落とさず、データベースの定期確認だけで続ける
                 // ⚠️ 開発用：原因を調べるためのログ。リリースするときに消してよい
-                Log.w(TAG, "Realtime に接続できませんでした。データベースの定期確認だけで続けます", e)
+                Log.w(TAG, "Realtime の購読に失敗しました。データベースの定期確認だけで続けます", e)
             }
         }
     }
@@ -432,6 +446,8 @@ class SupabaseBattleService(url: String, anonKey: String) : BattleService {
         const val RETRY_DELAY_MILLIS = 500L
         /** Realtime を取りこぼしたときのために、データベースを直接見に行く間隔（ミリ秒） */
         const val FALLBACK_FETCH_INTERVAL_MILLIS = 2_000L
+        /** Realtime の購読がこの時間たっても終わらなければ、つながっていないとみなしてログを出す（ミリ秒） */
+        const val REALTIME_WARNING_DELAY_MILLIS = 10_000L
     }
 }
 

@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
             SunshineTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     BattleScreen(
-                        viewModel = viewModel { BattleViewModel(battleService()) },
+                        viewModel = viewModel { BattleViewModel(battleService) },
                         location = currentLocation,
                         modifier = Modifier.padding(innerPadding),
                     )
@@ -35,15 +35,21 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** Supabase の鍵が local.properties にないときは、CPU が相手のダミーで動かす（鍵を持っていないメンバーでも画面を試せるように） */
-    private fun battleService(): BattleService =
-        if (SupabaseConfig.isConfigured) {
-            SupabaseBattleService(SupabaseConfig.URL, SupabaseConfig.ANON_KEY)
-        } else {
-            DummyBattleService()
+    private companion object {
+        /**
+         * 対戦の通信。アプリ全体で 1 つだけ作り、画面を開き直しても使い回す
+         * 作り直すと、古い SupabaseClient が残り続けるため
+         * （Realtime がつながらない間の再接続は 7 秒ごとに続き、SupabaseClient を閉じるまで止まらない）
+         * Supabase の鍵が local.properties にないときは、CPU が相手のダミーで動かす（鍵を持っていないメンバーでも画面を試せるように）
+         */
+        val battleService: BattleService by lazy {
+            if (SupabaseConfig.isConfigured) {
+                SupabaseBattleService(SupabaseConfig.URL, SupabaseConfig.ANON_KEY)
+            } else {
+                DummyBattleService()
+            }
         }
 
-    private companion object {
         /**
          * ⚠️ 開発用：この Android アプリには、まだ現在地の推定がないので、入口に固定する
          * 現在地の推定ができたら、推定した地点（わからない間は null）に置き換える
