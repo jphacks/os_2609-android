@@ -12,6 +12,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.sunshine.model.Location
 import com.example.sunshine.service.BattleService
 import com.example.sunshine.service.DummyBattleService
+import com.example.sunshine.service.SupabaseBattleService
+import com.example.sunshine.service.SupabaseConfig
 import com.example.sunshine.ui.battle.BattleScreen
 import com.example.sunshine.ui.battle.BattleViewModel
 import com.example.sunshine.ui.theme.SunshineTheme
@@ -33,7 +35,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun battleService(): BattleService = DummyBattleService()
+    /** Supabase の鍵が local.properties にないときは、CPU が相手のダミーで動かす（鍵を持っていないメンバーでも画面を試せるように） */
+    private fun battleService(): BattleService =
+        if (SupabaseConfig.isConfigured) {
+            SupabaseBattleService(SupabaseConfig.URL, SupabaseConfig.ANON_KEY)
+        } else {
+            DummyBattleService()
+        }
 
     private companion object {
         /**
