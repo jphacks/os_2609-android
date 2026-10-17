@@ -7,10 +7,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.sunshine.model.Location
+import com.example.sunshine.service.BattleService
+import com.example.sunshine.service.DummyBattleService
+import com.example.sunshine.ui.battle.BattleScreen
+import com.example.sunshine.ui.battle.BattleViewModel
 import com.example.sunshine.ui.theme.SunshineTheme
 
 class MainActivity : ComponentActivity() {
@@ -20,28 +23,23 @@ class MainActivity : ComponentActivity() {
         setContent {
             SunshineTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+                    BattleScreen(
+                        viewModel = viewModel { BattleViewModel(battleService()) },
+                        location = currentLocation,
+                        modifier = Modifier.padding(innerPadding),
                     )
                 }
             }
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+    private fun battleService(): BattleService = DummyBattleService()
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    SunshineTheme {
-        Greeting("Android")
+    private companion object {
+        /**
+         * ⚠️ 開発用：この Android アプリには、まだ現在地の推定がないので、入口に固定する
+         * 現在地の推定ができたら、推定した地点（わからない間は null）に置き換える
+         */
+        val currentLocation = Location.registered.first { it.id == "entrance" }
     }
 }
