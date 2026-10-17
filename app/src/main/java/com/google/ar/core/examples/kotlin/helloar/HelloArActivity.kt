@@ -15,29 +15,29 @@
  */
 package com.google.ar.core.examples.kotlin.helloar
 
-import android.app.Activity
+import android.opengl.Matrix
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import com.google.ar.core.Config
 import com.google.ar.core.Config.InstantPlacementMode
 import com.google.ar.core.Session
+import com.google.ar.core.TrackingFailureReason
+import com.google.ar.core.TrackingState
 import com.google.ar.core.examples.java.common.helpers.CameraPermissionHelper
 import com.google.ar.core.examples.java.common.helpers.DepthSettings
 import com.google.ar.core.examples.java.common.helpers.FullScreenHelper
 import com.google.ar.core.examples.java.common.helpers.InstantPlacementSettings
+import com.google.ar.core.examples.java.common.helpers.TrackingStateHelper
 import com.google.ar.core.examples.java.common.samplerender.SampleRender
 import com.google.ar.core.examples.kotlin.common.helpers.ARCoreSessionLifecycleHelper
 import com.google.ar.core.exceptions.CameraNotAvailableException
+import com.google.ar.core.exceptions.NotYetAvailableException
 import com.google.ar.core.exceptions.UnavailableApkTooOldException
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
-import android.Manifest
-import  android.content.pm.PackageManager
-import androidx.core.content.ContextCompat
 
 /**
  * This is a simple example that shows how to create an augmented reality (AR) application using the
@@ -47,7 +47,10 @@ import androidx.core.content.ContextCompat
 class HelloArActivity : AppCompatActivity() {
   companion object {
     private const val TAG = "HelloArActivity"
+
+
   }
+
 
   lateinit var arCoreSessionHelper: ARCoreSessionLifecycleHelper
   lateinit var view: HelloArView
@@ -99,19 +102,7 @@ class HelloArActivity : AppCompatActivity() {
     instantPlacementSettings.onCreate(this)
   }
 
-//  private fun checkAndRequestLocationPermission() {
-//    if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-//      != PackageManager.PERMISSION_GRANTED) {
-//      ActivityCompat.requestPermissions(
-//        this,
-//        arrayOf(
-//          Manifest.permission.ACCESS_FINE_LOCATION,
-//          Manifest.permission.ACCESS_COARSE_LOCATION
-//        ),
-//        LOCATION_PERMISSION_REQUEST_CODE
-//      )
-//    }
-//  }
+
 
   // Configure the session, using Lighting Estimation, and Depth mode.
   fun configureSession(session: Session) {
@@ -119,7 +110,6 @@ class HelloArActivity : AppCompatActivity() {
       session.config.apply {
         lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
 
-        geospatialMode = Config.GeospatialMode.DISABLED
         // Depth API is used if it is configured in Hello AR's settings.
         depthMode =
           if (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
@@ -161,6 +151,4 @@ class HelloArActivity : AppCompatActivity() {
     super.onWindowFocusChanged(hasFocus)
     FullScreenHelper.setFullScreenOnWindowFocusChanged(this, hasFocus)
   }
-
-
 }

@@ -145,7 +145,7 @@ public class Mesh implements Closeable {
 
       IndexBuffer indexBuffer = new IndexBuffer(render, vertexIndices);
 
-      return new Mesh(render, Mesh.PrimitiveMode.TRIANGLES, indexBuffer, vertexBuffers);
+      return new Mesh(render, PrimitiveMode.TRIANGLES, indexBuffer, vertexBuffers);
     }
   }
 

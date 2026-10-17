@@ -28,6 +28,7 @@ import com.google.ar.core.InstantPlacementPoint
 import com.google.ar.core.LightEstimate
 import com.google.ar.core.Plane
 import com.google.ar.core.Point
+import com.google.ar.core.Pose
 import com.google.ar.core.Session
 import com.google.ar.core.Trackable
 import com.google.ar.core.TrackingFailureReason
@@ -48,7 +49,6 @@ import com.google.ar.core.exceptions.CameraNotAvailableException
 import com.google.ar.core.exceptions.NotYetAvailableException
 import java.io.IOException
 import java.nio.ByteBuffer
-import com.google.ar.core.Pose
 
 /** Renders the HelloAR application using our example Renderer. */
 class HelloArRenderer(val activity: HelloArActivity) :
@@ -56,8 +56,6 @@ class HelloArRenderer(val activity: HelloArActivity) :
   companion object {
     val TAG = "HelloArRenderer"
 
-    // See the definition of updateSphericalHarmonicsCoefficients for an explanation of these
-    // constants.
     private val sphericalHarmonicFactors =
       floatArrayOf(
         0.282095f,
@@ -70,27 +68,17 @@ class HelloArRenderer(val activity: HelloArActivity) :
         -0.273137f,
         0.136569f
       )
-    private val customX = 0.0f
-    private val customY = -0.5f
-    private val customZ = -1.0f
 
-    private  var isObjectSpawned = false
+    private val customX = 0.0f
+    private val customY = -1.0f
+    private val customZ = -2.0f
+    private var isObjectSpawned = false
     private var customAnchor: Anchor? = null
 
     private val Z_NEAR = 0.1f
     private val Z_FAR = 100f
 
-    // Assumed distance from the device camera to the surface on which user will try to place
-    // objects.
-    // This value affects the apparent scale of objects while the tracking method of the
-    // Instant Placement point is SCREENSPACE_WITH_APPROXIMATE_DISTANCE.
-    // Values in the [0.2, 2.0] meter range are a good choice for most AR experiences. Use lower
-    // values for AR experiences where users are expected to place objects on surfaces close to the
-    // camera. Use larger values for experiences where the user will likely be standing and trying
-    // to
-    // place an object on the ground or floor in front of them.
     val APPROXIMATE_DISTANCE_METERS = 2.0f
-
     val CUBEMAP_RESOLUTION = 16
     val CUBEMAP_NUMBER_OF_IMPORTANCE_SAMPLES = 32
   }
@@ -106,8 +94,6 @@ class HelloArRenderer(val activity: HelloArActivity) :
   lateinit var pointCloudMesh: Mesh
   lateinit var pointCloudShader: Shader
 
-  // Keep track of the last point cloud rendered to avoid updating the VBO if point cloud
-  // was not changed.  Do this using the timestamp since we can't compare PointCloud objects.
   var lastPointCloudTimestamp: Long = 0
 
   // Virtual object (ARCore pawn)
@@ -122,18 +108,16 @@ class HelloArRenderer(val activity: HelloArActivity) :
   lateinit var dfgTexture: Texture
   lateinit var cubemapFilter: SpecularCubemapFilter
 
-  // Temporary matrix allocated here to reduce number of allocations for each frame.
   val modelMatrix = FloatArray(16)
   val viewMatrix = FloatArray(16)
   val projectionMatrix = FloatArray(16)
-  val modelViewMatrix = FloatArray(16) // view x model
+  val modelViewMatrix = FloatArray(16)
+  val modelViewProjectionMatrix = FloatArray(16)
 
-  val modelViewProjectionMatrix = FloatArray(16) // projection x view x model
-
-  val sphericalHarmonicsCoefficients = FloatArray(9 * 3)
+  val sphericalHarmonicsCoefficients = FloatArray(27)
   val viewInverseMatrix = FloatArray(16)
   val worldLightDirection = floatArrayOf(0.0f, 0.0f, 0.0f, 0.0f)
-  val viewLightDirection = FloatArray(4) // view x world light direction
+  val viewLightDirection = FloatArray(4)
 
   val session
     get() = activity.arCoreSessionHelper.session
@@ -151,24 +135,21 @@ class HelloArRenderer(val activity: HelloArActivity) :
   }
 
   override fun onSurfaceCreated(render: SampleRender) {
-    // Prepare the rendering objects.
-    // This involves reading shaders and 3D model files, so may throw an IOException.
     try {
       planeRenderer = PlaneRenderer(render)
       backgroundRenderer = BackgroundRenderer(render)
-      virtualSceneFramebuffer = Framebuffer(render, /*width=*/ 1, /*height=*/ 1)
+      virtualSceneFramebuffer = Framebuffer(render, 1, 1)
 
       cubemapFilter =
         SpecularCubemapFilter(render, CUBEMAP_RESOLUTION, CUBEMAP_NUMBER_OF_IMPORTANCE_SAMPLES)
-      // Load environmental lighting values lookup table
+
       dfgTexture =
         Texture(
           render,
           Texture.Target.TEXTURE_2D,
           Texture.WrapMode.CLAMP_TO_EDGE,
-          /*useMipmaps=*/ false
+          false
         )
-      // The dfg.raw file is a raw half-float texture with two channels.
       val dfgResolution = 64
       val dfgChannels = 2
       val halfFloatSize = 2
@@ -177,41 +158,37 @@ class HelloArRenderer(val activity: HelloArActivity) :
         ByteBuffer.allocateDirect(dfgResolution * dfgResolution * dfgChannels * halfFloatSize)
       activity.assets.open("models/dfg.raw").use { it.read(buffer.array()) }
 
-      // SampleRender abstraction leaks here.
       GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, dfgTexture.textureId)
       GLError.maybeThrowGLException("Failed to bind DFG texture", "glBindTexture")
       GLES30.glTexImage2D(
         GLES30.GL_TEXTURE_2D,
-        /*level=*/ 0,
+        0,
         GLES30.GL_RG16F,
-        /*width=*/ dfgResolution,
-        /*height=*/ dfgResolution,
-        /*border=*/ 0,
+        dfgResolution,
+        dfgResolution,
+        0,
         GLES30.GL_RG,
         GLES30.GL_HALF_FLOAT,
         buffer
       )
       GLError.maybeThrowGLException("Failed to populate DFG texture", "glTexImage2D")
 
-      // Point cloud
       pointCloudShader =
         Shader.createFromAssets(
-            render,
-            "shaders/point_cloud.vert",
-            "shaders/point_cloud.frag",
-            /*defines=*/ null
-          )
+          render,
+          "shaders/point_cloud.vert",
+          "shaders/point_cloud.frag",
+          null
+        )
           .setVec4("u_Color", floatArrayOf(31.0f / 255.0f, 188.0f / 255.0f, 210.0f / 255.0f, 1.0f))
           .setFloat("u_PointSize", 5.0f)
 
-      // four entries per vertex: X, Y, Z, confidence
       pointCloudVertexBuffer =
-        VertexBuffer(render, /*numberOfEntriesPerVertex=*/ 4, /*entries=*/ null)
+        VertexBuffer(render, 4, null)
       val pointCloudVertexBuffers = arrayOf(pointCloudVertexBuffer)
       pointCloudMesh =
-        Mesh(render, Mesh.PrimitiveMode.POINTS, /*indexBuffer=*/ null, pointCloudVertexBuffers)
+        Mesh(render, Mesh.PrimitiveMode.POINTS, null, pointCloudVertexBuffers)
 
-      // Virtual object to render (ARCore pawn)
       virtualObjectAlbedoTexture =
         Texture.createFromAsset(
           render,
@@ -238,11 +215,11 @@ class HelloArRenderer(val activity: HelloArActivity) :
       virtualObjectMesh = Mesh.createFromAsset(render, "models/pawn.obj")
       virtualObjectShader =
         Shader.createFromAssets(
-            render,
-            "shaders/environmental_hdr.vert",
-            "shaders/environmental_hdr.frag",
-            mapOf("NUMBER_OF_MIPMAP_LEVELS" to cubemapFilter.numberOfMipmapLevels.toString())
-          )
+          render,
+          "shaders/environmental_hdr.vert",
+          "shaders/environmental_hdr.frag",
+          mapOf("NUMBER_OF_MIPMAP_LEVELS" to cubemapFilter.numberOfMipmapLevels.toString())
+        )
           .setTexture("u_AlbedoTexture", virtualObjectAlbedoTexture)
           .setTexture("u_RoughnessMetallicAmbientOcclusionTexture", virtualObjectPbrTexture)
           .setTexture("u_Cubemap", cubemapFilter.filteredCubemapTexture)
@@ -295,6 +272,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
     val shouldGetDepthImage =
       activity.depthSettings.useDepthForOcclusion() ||
               activity.depthSettings.depthColorVisualizationEnabled()
+
     if (camera.trackingState == TrackingState.TRACKING && shouldGetDepthImage) {
       try {
         val depthImage = frame.acquireDepthImage16Bits()
@@ -306,15 +284,13 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
     trackingStateHelper.updateKeepScreenOnFlag(camera.trackingState)
 
-    // ★ 描画前に指定座標へアンカーを自動生成するロジックを配置
+    // ★ 指定した位置に自動でアンカーを生成する処理
     if (camera.trackingState == TrackingState.TRACKING && !isObjectSpawned) {
       val position = floatArrayOf(customX, customY, customZ)
       val rotation = floatArrayOf(0f, 0f, 0f, 1f) // 回転なし
       val pose = Pose(position, rotation)
 
       val anchor = session.createAnchor(pose)
-
-      // wrappedAnchors に追加して描画対象にする
       wrappedAnchors.add(WrappedAnchor(anchor, trackable = null))
 
       isObjectSpawned = true
@@ -333,6 +309,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
         session.hasTrackingPlane() && wrappedAnchors.isNotEmpty() -> null
         else -> activity.getString(R.string.searching_planes)
       }
+
     if (message == null) {
       activity.view.snackbarHelper.hide(activity)
     } else {
@@ -368,7 +345,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
     updateLightEstimation(frame.lightEstimate, viewMatrix)
 
-    // Visualize anchors created by touch.
+    // ★ オブジェクトの描画
     render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f)
     for ((anchor, trackable) in
     wrappedAnchors.filter { it.anchor.trackingState == TrackingState.TRACKING }) {
@@ -394,11 +371,9 @@ class HelloArRenderer(val activity: HelloArActivity) :
     backgroundRenderer.drawVirtualScene(render, virtualSceneFramebuffer, Z_NEAR, Z_FAR)
   }
 
-  /** Checks if we detected at least one plane. */
   private fun Session.hasTrackingPlane() =
     getAllTrackables(Plane::class.java).any { it.trackingState == TrackingState.TRACKING }
 
-  /** Update state based on the current frame's light estimation. */
   private fun updateLightEstimation(lightEstimate: LightEstimate, viewMatrix: FloatArray) {
     if (lightEstimate.state != LightEstimate.State.VALID) {
       virtualObjectShader.setBool("u_LightEstimateIsValid", false)
@@ -421,7 +396,6 @@ class HelloArRenderer(val activity: HelloArActivity) :
     intensity: FloatArray,
     viewMatrix: FloatArray
   ) {
-    // We need the direction in a vec4 with 0.0 as the final component to transform it to view space
     worldLightDirection[0] = direction[0]
     worldLightDirection[1] = direction[1]
     worldLightDirection[2] = direction[2]
@@ -431,25 +405,11 @@ class HelloArRenderer(val activity: HelloArActivity) :
   }
 
   private fun updateSphericalHarmonicsCoefficients(coefficients: FloatArray) {
-    // Pre-multiply the spherical harmonics coefficients before passing them to the shader. The
-    // constants in sphericalHarmonicFactors were derived from three terms:
-    //
-    // 1. The normalized spherical harmonics basis functions (y_lm)
-    //
-    // 2. The lambertian diffuse BRDF factor (1/pi)
-    //
-    // 3. A <cos> convolution. This is done to so that the resulting function outputs the irradiance
-    // of all incoming light over a hemisphere for a given surface normal, which is what the shader
-    // (environmental_hdr.frag) expects.
-    //
-    // You can read more details about the math here:
-    // https://google.github.io/filament/Filament.html#annex/sphericalharmonics
-    require(coefficients.size == 9 * 3) {
-      "The given coefficients array must be of length 27 (3 components per 9 coefficients"
+    require(coefficients.size == 27) {
+      "The given coefficients array must be of length 27 (3 components per 9 coefficients)"
     }
 
-    // Apply each factor to every component of each coefficient
-    for (i in 0 until 9 * 3) {
+    for (i in 0 until 27) {
       sphericalHarmonicsCoefficients[i] = coefficients[i] * sphericalHarmonicFactors[i / 3]
     }
     virtualObjectShader.setVec3Array(
@@ -458,61 +418,10 @@ class HelloArRenderer(val activity: HelloArActivity) :
     )
   }
 
-  // Handle only one tap per frame, as taps are usually low frequency compared to frame rate.
-//  private fun handleTap(frame: Frame, camera: Camera) {
-//    if (camera.trackingState != TrackingState.TRACKING) return
-//    val tap = activity.view.tapHelper.poll() ?: return
-//
-//    val hitResultList =
-//      if (activity.instantPlacementSettings.isInstantPlacementEnabled) {
-//        frame.hitTestInstantPlacement(tap.x, tap.y, APPROXIMATE_DISTANCE_METERS)
-//      } else {
-//        frame.hitTest(tap)
-//      }
-//
-//    // Hits are sorted by depth. Consider only closest hit on a plane, Oriented Point, Depth Point,
-//    // or Instant Placement Point.
-//    val firstHitResult =
-//      hitResultList.firstOrNull { hit ->
-//        when (val trackable = hit.trackable!!) {
-//          is Plane ->
-//            trackable.isPoseInPolygon(hit.hitPose) &&
-//              PlaneRenderer.calculateDistanceToPlane(hit.hitPose, camera.pose) > 0
-//          is Point -> trackable.orientationMode == Point.OrientationMode.ESTIMATED_SURFACE_NORMAL
-//          is InstantPlacementPoint -> true
-//          // DepthPoints are only returned if Config.DepthMode is set to AUTOMATIC.
-//          is DepthPoint -> true
-//          else -> false
-//        }
-//      }
-//
-//    if (firstHitResult != null) {
-//      // Cap the number of objects created. This avoids overloading both the
-//      // rendering system and ARCore.
-//      if (wrappedAnchors.size >= 20) {
-//        wrappedAnchors[0].anchor.detach()
-//        wrappedAnchors.removeAt(0)
-//      }
-//
-//      // Adding an Anchor tells ARCore that it should track this position in
-//      // space. This anchor is created on the Plane to place the 3D model
-//      // in the correct position relative both to the world and to the plane.
-//      wrappedAnchors.add(WrappedAnchor(firstHitResult.createAnchor(), firstHitResult.trackable))
-//
-//      // For devices that support the Depth API, shows a dialog to suggest enabling
-//      // depth-based occlusion. This dialog needs to be spawned on the UI thread.
-//      activity.runOnUiThread { activity.view.showOcclusionDialogIfNeeded() }
-//    }
-//  }
-
   private fun showError(errorMessage: String) =
     activity.view.snackbarHelper.showError(activity, errorMessage)
 }
 
-/**
- * Associates an Anchor with the trackable it was attached to. This is used to be able to check
- * whether or not an Anchor originally was attached to an {@link InstantPlacementPoint}.
- */
 private data class WrappedAnchor(
   val anchor: Anchor,
   val trackable: Trackable?,
