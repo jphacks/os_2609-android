@@ -7,10 +7,15 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.sunshine.model.Location
+import com.example.sunshine.service.BattleService
+import com.example.sunshine.service.DummyBattleService
+import com.example.sunshine.service.SupabaseBattleService
+import com.example.sunshine.service.SupabaseConfig
+import com.example.sunshine.ui.battle.BattleScreen
+import com.example.sunshine.ui.battle.BattleViewModel
 import com.example.sunshine.ui.theme.SunshineTheme
 
 class MainActivity : ComponentActivity() {
@@ -20,28 +25,35 @@ class MainActivity : ComponentActivity() {
         setContent {
             SunshineTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+                    BattleScreen(
+                        viewModel = viewModel { BattleViewModel(battleService) },
+                        location = currentLocation,
+                        modifier = Modifier.padding(innerPadding),
                     )
                 }
             }
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+    private companion object {
+        /**
+         * 対戦の通信。アプリ全体で 1 つだけ作り、画面を開き直しても使い回す
+         * 作り直すと、古い SupabaseClient が残り続けるため
+         * （Realtime がつながらない間の再接続は 7 秒ごとに続き、SupabaseClient を閉じるまで止まらない）
+         * Supabase の鍵が local.properties にないときは、CPU が相手のダミーで動かす（鍵を持っていないメンバーでも画面を試せるように）
+         */
+        val battleService: BattleService by lazy {
+            if (SupabaseConfig.isConfigured) {
+                SupabaseBattleService(SupabaseConfig.URL, SupabaseConfig.ANON_KEY)
+            } else {
+                DummyBattleService()
+            }
+        }
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    SunshineTheme {
-        Greeting("Android")
+        /**
+         * ⚠️ 開発用：この Android アプリには、まだ現在地の推定がないので、入口に固定する
+         * 現在地の推定ができたら、推定した地点（わからない間は null）に置き換える
+         */
+        val currentLocation = Location.registered.first { it.id == "entrance" }
     }
 }
