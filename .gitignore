@@ -9,7 +9,6 @@ local.properties
 *.keystore
 *.jks
 keystore.properties
-google-services.json
 
 # Android Studio / IntelliJ
 *.iml
