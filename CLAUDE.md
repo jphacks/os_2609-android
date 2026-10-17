@@ -12,6 +12,7 @@ iOS アプリ（[jphacks/os_2609-iOS](https://github.com/jphacks/os_2609-iOS)）
   - https://raw.githubusercontent.com/jphacks/os_2609-iOS/feature/supabase-connection/ARApp/Logic/BattleEngine.swift
   - https://raw.githubusercontent.com/jphacks/os_2609-iOS/feature/supabase-connection/ARApp/Services/SupabaseBattleService.swift
   - 同じディレクトリ構成で `Models/Battle/`・`Services/BattleService.swift`・`ViewModels/BattleViewModel.swift` もある
+- iOS と対戦して確かめる手順：[docs/battle-test.md](docs/battle-test.md)
 
 ## プロジェクトの構成
 
