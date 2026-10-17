@@ -16,23 +16,23 @@
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
-    ext.kotlin_version = '1.9.20'
+    ext.kotlin_version = '1.9.24'
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.12.3'
+        classpath 'com.android.tools.build:gradle:8.7.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
 
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
 
-        room_version = "3.0.3"
+//        room_version = "3.0.3"
 
-        implementation("androidx.room3:room3-runtime:$room_version")
-        ksp("androidx.room3:room3-compiler:$room_version")
+//        implementation("androidx.room3:room3-runtime:$room_version")
+//        ksp("androidx.room3:room3-compiler:$room_version")
     }
 }
 

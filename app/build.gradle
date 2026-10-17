@@ -18,7 +18,7 @@ apply plugin: 'kotlin-android'
 
 android {
     namespace "com.google.ar.core.examples.kotlin.helloar"
-    compileSdkVersion 'android-37.0'
+    compileSdkVersion 'android-35'
     defaultConfig {
         applicationId "com.google.ar.core.examples.kotlin.helloar"
 
