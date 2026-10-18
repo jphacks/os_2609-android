@@ -6,17 +6,17 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * 対戦相手とのやり取り（iOS の BattleService と同じ 5 つの操作）
- * マルチバトルは SupabaseBattleService、Supabase の鍵がないときは CPUBattleService（CPU が相手）を使う
+ * 近接プレイヤー対戦は SupabaseBattleService を使う
  * 捕獲画面の野生のモンスターとのバトルは、いつも CPUBattleService を使う
  */
 interface BattleService {
   /**
-   * 対戦相手を探す。場所は問わず、対戦相手を待っている人がいれば、その人と対戦する
+   * オンライン対戦は双方承諾済みの pairingToken が必須。野生CPU対戦は null を渡す
    * 誰も待っていなければ、自分が待つ側になって相手が来るまで待ち続ける
    * 待っている間にコルーチンがキャンセルされたら、待つのをやめる
    * 見つかった相手のモンスターを返す
    */
-  suspend fun findOpponent(monster: Monster): Monster
+  suspend fun findOpponent(monster: Monster, pairingToken: String? = null): Monster
 
   /**
    * 相手の行動が、相手が行った順に流れてくる

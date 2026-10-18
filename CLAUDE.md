@@ -7,7 +7,7 @@ HelloAR（ARCore のサンプル）をもとにしている。AR と 3D はす�
 
 - 作ったときの指示（iOS とそろえること、作り方）：[docs/multi-battle.md](docs/multi-battle.md)
 - **iOS とそろえないと対戦できない**：行動の文字列、ルールの数値、モンスターの `modelName`、データベースの使い方。正は iOS のコードと `supabase/schema.sql`。iOS を変えたら、こちらも同じように変える。
-- 入口：マップ画面（`map/MapActivity`）の「マルチバトル」ボタン → `battle/BattleActivity`
+- 入口：マップ画面（`map/MapActivity`）の「対戦受付」→ BLE 発見 → `nearby_pair` でペア確保・双方承諾 → `battle/BattleActivity`。詳細は [docs/nearby-battle.md](docs/nearby-battle.md)
 
 ```
 app/src/main/java/com/google/ar/core/examples/kotlin/helloar/
@@ -46,7 +46,7 @@ app/src/main/java/com/google/ar/core/examples/kotlin/helloar/
 ## プロジェクト設定
 
 - AGP 9.2（Kotlin は AGP に組み込み。Kotlin のバージョンは `build.gradle` の `kotlin_version`）、Gradle 9.4、Java 21（SceneView が使う kotlin-math が Java 21 向けのため）。
-- Supabase の接続先は `local.properties` に書く（コミットしない）。書いていなければ CPU が相手になる。
+- Supabase の接続先は `local.properties` に書く（コミットしない）。未設定なら近接プレイヤー対戦の受付を開始しない。野生対戦は従来どおり CPU を使う。
   ```properties
   supabase.url=https://xxxx.supabase.co
   supabase.anonKey=<anon（public）key>

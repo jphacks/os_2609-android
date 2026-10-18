@@ -33,7 +33,7 @@ fun BattleLobbyComponent(
   isCancelling: Boolean,
   /** 対戦できなかったとき（通信の失敗、相手が抜けた）のメッセージ */
   errorMessage: String?,
-  onFind: () -> Unit,
+  onFind: (() -> Unit)?,
   onCancel: () -> Unit,
   /** 野生のモンスターとのバトルなら、相手のモンスター。ほかのプレイヤーとの対戦なら null（相手は探すまでわからない） */
   wildMonster: Monster? = null,
@@ -71,7 +71,7 @@ fun BattleLobbyComponent(
     }
     Text(
       wildMonster?.let { "野生の${it.name}が勝負をしかけてきた！勝つと捕まえられます。画面をタップして攻撃しよう" }
-        ?: "「バトルする」を押した人どうしで対戦できます。画面をタップして攻撃しよう",
+        ?: "マップ画面で対戦受付をオンにし、近くの相手と確認してから対戦します。",
       fontSize = 15.sp,
       color = Color.White.copy(alpha = 0.7f),
       textAlign = TextAlign.Center,
@@ -92,9 +92,11 @@ fun BattleLobbyComponent(
           BattleButtonComponent("やめる", color = Color.White, onClick = onCancel)
         }
       }
-    } else {
+    } else if (onFind != null) {
       BattleButtonComponent("バトルする", onClick = onFind)
       onFlee?.let { BattleButtonComponent("にげる", color = Color.White, onClick = it) }
+    } else {
+      Text("次の対戦はマップ画面に戻って受付をオンにしてください", color = Color.White, textAlign = TextAlign.Center)
     }
   }
 }

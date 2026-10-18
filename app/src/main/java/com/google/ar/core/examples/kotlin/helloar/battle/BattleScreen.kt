@@ -56,7 +56,7 @@ fun BattleScreen(viewModel: BattleViewModel, wildBattle: WildBattle? = null) {
         viewModel.phase == BattleViewModel.Phase.CANCELLING_SEARCH,
       isCancelling = viewModel.phase == BattleViewModel.Phase.CANCELLING_SEARCH,
       errorMessage = viewModel.errorMessage,
-      onFind = viewModel::findOpponent,
+      onFind = if (wildBattle != null) ({ viewModel.findOpponent() }) else null,
       onCancel = viewModel::cancelSearch,
       wildMonster = wildBattle?.monster,
       onFlee = wildBattle?.onFlee,

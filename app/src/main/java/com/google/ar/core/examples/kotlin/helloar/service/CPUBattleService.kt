@@ -34,7 +34,7 @@ class CPUBattleService(private val opponent: Monster? = null) : BattleService {
   /** CPU の行動を流す先。こちらの必殺技に、受けたかよけたかを返すのに使う */
   private var actions: ProducerScope<BattleAction>? = null
 
-  override suspend fun findOpponent(monster: Monster): Monster {
+  override suspend fun findOpponent(monster: Monster, pairingToken: String?): Monster {
     opponent?.let { return it }
     delay(1_500)
     return Monster.ALL.random()

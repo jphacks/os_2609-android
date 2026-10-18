@@ -176,7 +176,7 @@ class BattleViewModel(
     get() = stamina.isResting(now())
 
   /** 「バトルする」が押されたときに呼ぶ。対戦相手を探し、誰も待っていなければ相手が来るまで待つ */
-  fun findOpponent() {
+  fun findOpponent(pairingToken: String? = null) {
     if (phase != Phase.LOBBY) return
     phase = Phase.SEARCHING
     errorMessage = null
@@ -186,7 +186,7 @@ class BattleViewModel(
       // 片付けを待っている間に「やめる」が押されていたら、ここでキャンセルされて相手を探さない
       previousLeave?.join()
       try {
-        val opponentMonster = service.findOpponent(myMonster)
+        val opponentMonster = service.findOpponent(myMonster, pairingToken)
         startBattle(opponentMonster)
       } catch (e: CancellationException) {
         // 自分でやめたとき（cancelSearch）はエラーにしない
