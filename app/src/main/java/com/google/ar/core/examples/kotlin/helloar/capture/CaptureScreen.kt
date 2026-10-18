@@ -12,7 +12,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +35,7 @@ import com.google.ar.core.examples.kotlin.helloar.model.Monster
 import com.google.ar.core.examples.kotlin.helloar.service.CPUBattleService
 import com.google.ar.core.examples.kotlin.helloar.viewmodel.BattleViewModel
 import com.google.ar.core.examples.kotlin.helloar.viewmodel.CaptureViewModel
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 
 /**
@@ -117,10 +117,10 @@ fun CaptureScreen(viewModel: CaptureViewModel) {
 @Composable
 private fun WildBattleComponent(wild: Monster, arHandoff: ArHandoff, onFinish: (BattleViewModel.Outcome) -> Unit, onFlee: () -> Unit) {
   val owner = rememberViewModelStoreOwner()
-  // 対戦から抜ける通信（leave）に使うが、CPU は何もしないので、この部品の scope でよい
-  val scope = rememberCoroutineScope()
   val battleViewModel: BattleViewModel = viewModel(viewModelStoreOwner = owner) {
-    BattleViewModel(CPUBattleService(opponent = wild), scope)
+    // BattleViewModel は、片付けたあとに対戦から抜ける（leave）のに、画面より長く動く scope を使う
+    // この部品の scope は片付けと同時に止まるので渡さない。CPU の leave はすぐ終わるので、MainScope を作って渡す
+    BattleViewModel(CPUBattleService(opponent = wild), MainScope())
   }
   BattleScreen(battleViewModel, WildBattle(wild, arHandoff, onFinish, onFlee))
 }

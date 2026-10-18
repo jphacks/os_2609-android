@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,6 +47,8 @@ fun BattleLobbyComponent(
       .fillMaxSize()
       // 野生のモンスターとのバトルでは、後ろで捕獲画面の AR が動いているので、カメラの映像が少し透けて見えるようにする
       .background(if (wildMonster != null) BattleStyle.ink.copy(alpha = 0.85f) else BattleStyle.ink)
+      // 後ろの捕獲画面の AR に、タップを通さない（ボタン以外の所をタップしても、AR の中のものを触らない）
+      .pointerInput(Unit) {}
       .padding(24.dp),
   ) {
     Text(

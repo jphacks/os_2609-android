@@ -21,8 +21,13 @@ import com.google.ar.core.examples.kotlin.helloar.viewmodel.BattleViewModel
 fun BattleScreen(viewModel: BattleViewModel, wildBattle: WildBattle? = null) {
   // アプリが隠れたとき（ホームに戻った、画面を消した）は、相手を待つのをやめて部屋を片付ける（対戦中ならそのまま続ける）
   // 待ったままにすると、隠れても部屋がしばらく残り、ほかの人がいない相手とつながってしまう
+  // 野生のモンスターとのバトルでは、対戦中でもモンスターに逃げられたことにして、捕獲画面に戻る（決着していたら、その結果で戻る）
+  // 相手の CPU はこの端末の中で動いていて、アプリが隠れている間も攻撃し続けるので、戻ってきたときには負けてしまっている
   LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
     viewModel.cancelSearch()
+    if (wildBattle != null) {
+      viewModel.outcome?.let(wildBattle.onFinish) ?: wildBattle.onFlee()
+    }
   }
 
   val me = viewModel.me

@@ -201,8 +201,18 @@ class BattleArSceneController(
     }
   }
 
-  /** 画面を閉じたときに呼ぶ。アンカーを外す */
+  /**
+   * 画面を閉じたときに呼ぶ。アンカーを外す
+   * 野生のモンスターとのバトルでは、モンスターも消す。エンジンは捕獲画面のものでバトルのあとも残るので、
+   * 消さないと、バトルのたびに読み込んだモデルがたまっていく（ほかのプレイヤーとの対戦は、画面ごとエンジンが片付けられる）
+   */
   fun stop() {
+    if (wildPosition != null) {
+      for (holder in listOfNotNull(myHolder, opponentHolder)) {
+        anchorNode?.removeChildNode(holder)
+        holder.destroy()
+      }
+    }
     floorAnchor?.detach()
   }
 
@@ -243,7 +253,9 @@ class BattleArSceneController(
       val wildDistance = length(toWild)
       val direction = if (wildDistance > 0.1f) toWild / wildDistance else forward
       val right = Float3(-direction.z, 0f, direction.x)
+      // 相手がすぐ近くにいたときも、自分のモンスターとの間を空けられるよう、少しは離して置く
       val opponentDistance = min(wildDistance, OPPONENT_DISTANCE)
+        .coerceAtLeast(HANDOFF_MINIMUM_MY_DISTANCE + HANDOFF_MINIMUM_SPACING)
       val myDistance = max(min(MY_DISTANCE, opponentDistance - HANDOFF_MINIMUM_SPACING), HANDOFF_MINIMUM_MY_DISTANCE)
       opponentHome = camera + direction * opponentDistance
       myHome = camera + direction * myDistance - right * SIDE_OFFSET
