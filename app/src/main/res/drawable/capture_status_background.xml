@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 捕獲画面の上の案内の背景。カメラの映像の上でも読めるよう、白く透けるカプセル形にする -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+  <solid android:color="#D9FFFFFF" />
+  <corners android:radius="999dp" />
+</shape>

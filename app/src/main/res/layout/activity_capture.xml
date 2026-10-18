@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AR 捕獲画面。カメラ映像の上に、矢印・案内・捕獲成功の画面を重ねる -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+  <android.opengl.GLSurfaceView
+      android:id="@+id/surface_view"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent" />
+
+  <!-- 画面の外にいるモンスターの方向を示す。タップは受け取らない -->
+  <com.google.ar.core.examples.kotlin.helloar.capture.MonsterArrowView
+      android:id="@+id/arrow_view"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent" />
+
+  <TextView
+      android:id="@+id/status_text"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="top|center_horizontal"
+      android:layout_marginHorizontal="16dp"
+      android:layout_marginTop="32dp"
+      android:background="@drawable/capture_status_background"
+      android:paddingHorizontal="16dp"
+      android:paddingVertical="10dp"
+      android:textColor="@android:color/black"
+      android:textSize="17sp"
+      android:textStyle="bold" />
+
+  <!--
+    捕獲成功の画面（iOS の MonsterDetailView）。別の Activity にせず重ねるので、後ろで AR が動き続け、
+    閉じたらすぐ次のモンスターを探せる。clickable で、後ろの AR にタップが届かないようにする
+  -->
+  <LinearLayout
+      android:id="@+id/detail_overlay"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:background="@color/capture_ink"
+      android:clickable="true"
+      android:focusable="true"
+      android:gravity="center"
+      android:orientation="vertical"
+      android:padding="24dp"
+      android:visibility="gone">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/capture_pink"
+        android:paddingHorizontal="28dp"
+        android:rotation="-6"
+        android:text="@string/capture_get"
+        android:textColor="@color/capture_yellow"
+        android:textSize="80sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/capture_success"
+        android:textColor="@android:color/white"
+        android:textSize="28sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/detail_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:background="@color/capture_cyan"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="4dp"
+        android:textColor="@android:color/black"
+        android:textSize="40sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/detail_size"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:textColor="@color/capture_lime"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/detail_close"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:text="@string/capture_close" />
+  </LinearLayout>
+</FrameLayout>

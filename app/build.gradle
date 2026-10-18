@@ -66,4 +66,10 @@ dependencies {
 
     // ARCore SDK
     implementation("com.google.ar:core:1.40.0")
+
+    // マップ画面（現在地の推定）で使う ViewModel・StateFlow・権限のリクエスト
+    implementation("androidx.activity:activity-ktx:1.8.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }
