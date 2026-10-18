@@ -16,6 +16,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.ar.core.examples.kotlin.helloar.R
+import com.google.ar.core.examples.kotlin.helloar.battle.BattleActivity
 import com.google.ar.core.examples.kotlin.helloar.capture.CaptureActivity
 import com.google.ar.core.examples.kotlin.helloar.model.Location
 import com.google.ar.core.examples.kotlin.helloar.service.BeaconScanner
@@ -65,6 +66,9 @@ class MapActivity : AppCompatActivity() {
 
     findViewById<Button>(R.id.capture_button).setOnClickListener {
       startActivity(Intent(this, CaptureActivity::class.java))
+    }
+    findViewById<Button>(R.id.battle_button).setOnClickListener {
+      startActivity(Intent(this, BattleActivity::class.java))
     }
 
     lifecycleScope.launch {

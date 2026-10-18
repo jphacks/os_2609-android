@@ -22,5 +22,6 @@
   <string translatable="false" name="capture_success">捕獲成功！</string>
   <string translatable="false" name="capture_size">大きさ %.1fm</string>
   <string translatable="false" name="capture_close">つぎへ</string>
+  <string translatable="false" name="open_battle">マルチバトル</string>
 
 </resources>

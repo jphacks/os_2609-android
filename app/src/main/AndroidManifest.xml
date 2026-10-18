@@ -26,6 +26,8 @@
   <!-- BLUETOOTH_SCAN に neverForLocation を付けるとビーコンの結果が除かれることがあるので、位置情報の権限ももらう -->
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
   <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
+  <!-- 対戦（Supabase）に使う -->
+  <uses-permission android:name="android.permission.INTERNET"/>
   <!-- Required to post notifications for Android T+ devices -->
 
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -64,7 +66,14 @@
         android:exported="false"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="portrait" />
+    <!-- マルチバトル（マップ画面の「マルチバトル」ボタンから開く） -->
+    <activity
+        android:name="com.google.ar.core.examples.kotlin.helloar.battle.BattleActivity"
+        android:exported="false"
+        android:theme="@style/Theme.AppCompat.NoActionBar"
+        android:screenOrientation="portrait"/>
     <!-- Indicates whether "Google Play Services for AR" (ARCore) is "required" or "optional". -->
-    <meta-data android:name="com.google.ar.core" android:value="required" />
+    <!-- SceneView は optional にしているが、このアプリは AR が必須なので required で上書きする -->
+    <meta-data android:name="com.google.ar.core" android:value="required" tools:replace="android:value" />
   </application>
 </manifest>
