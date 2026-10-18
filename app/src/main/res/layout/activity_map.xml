@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- マップ画面。屋内マップの上に、推定した現在地を表示する -->
+<!-- fitsSystemWindows は padding を上書きするので、余白は中の LinearLayout に付ける -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+  <TextView
+      android:id="@+id/status_text"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginBottom="16dp"
+      android:textColor="@android:color/black"
+      android:textSize="17sp"
+      android:textStyle="bold" />
+
+  <!-- 残りの高さいっぱいを渡し、IndoorMapView が 3:4 で収まる大きさを決める -->
+  <FrameLayout
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:layout_weight="1">
+
+    <com.google.ar.core.examples.kotlin.helloar.map.IndoorMapView
+        android:id="@+id/indoor_map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center" />
+  </FrameLayout>
+
+  <!-- iOS のタブの代わりに、ここから AR の捕獲画面へ移る -->
+  <Button
+      android:id="@+id/capture_button"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="16dp"
+      android:text="@string/open_capture" />
+
+  <!-- iOS の「マルチバトル」タブの代わりに、ここから対戦の画面へ移る -->
+  <Button
+      android:id="@+id/battle_button"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:text="@string/open_battle" />
+</LinearLayout>
+</FrameLayout>

@@ -1,0 +1,32 @@
+package com.google.ar.core.examples.kotlin.helloar.service
+
+import android.content.Context
+import com.google.ar.core.examples.kotlin.helloar.model.Monster
+
+/**
+ * 捕まえたモンスターと、バトルに出すモンスターを SharedPreferences に保存する（端末の中だけ）
+ * 捕まえたモンスターは modelName の集合で持つので、同じ種類を何度捕まえても 1 件のまま
+ * バトルに出すモンスターは modelName を 1 つだけ持つ
+ */
+class PreferencesMonsterCollection(context: Context) : MonsterCollection {
+  companion object {
+    private const val PREFERENCES_NAME = "monster_collection"
+    private const val KEY_CAPTURED = "captured_model_names"
+    private const val KEY_BATTLE_MONSTER = "battle_monster_model_name"
+  }
+
+  private val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+
+  override fun add(monster: Monster) {
+    // getStringSet が返す集合は書き換えてはいけないので、新しい集合を作って保存する
+    val captured = preferences.getStringSet(KEY_CAPTURED, emptySet()).orEmpty()
+    preferences.edit().putStringSet(KEY_CAPTURED, captured + monster.modelName).apply()
+  }
+
+  override val battleMonster: Monster?
+    get() = preferences.getString(KEY_BATTLE_MONSTER, null)?.let(Monster::named)
+
+  override fun setBattleMonster(monster: Monster) {
+    preferences.edit().putString(KEY_BATTLE_MONSTER, monster.modelName).apply()
+  }
+}

@@ -14,7 +14,15 @@
  * limitations under the License.
  */
 apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
+apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
+
+// Supabase の接続先は、コミットしない local.properties から読む（書き方は CLAUDE.md）
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { localProperties.load(it) }
+}
 
 android {
     namespace "com.google.ar.core.examples.kotlin.helloar"
@@ -28,10 +36,18 @@ android {
         targetSdkVersion 37
         versionCode 1
         versionName '1.0'
+
+        buildConfigField "String", "SUPABASE_URL", "\"${localProperties.getProperty('supabase.url', '')}\""
+        buildConfigField "String", "SUPABASE_ANON_KEY", "\"${localProperties.getProperty('supabase.anonKey', '')}\""
+    }
+    buildFeatures {
+        compose true
+        buildConfig true
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        // SceneView が使う kotlin-math が Java 21 向けに作られているので、21 にそろえる
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
     }
     buildTypes {
         release {
@@ -39,23 +55,14 @@ android {
 //            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    kotlinOptions {
-        jvmTarget = '17'
-    }
 }
 
 dependencies {
     // ARCore (Google Play Services for AR) library.
     implementation 'com.google.ar:core:1.56.0'
 
-    // Obj - a simple Wavefront OBJ file loader
-    // https://github.com/javagl/Obj
-    implementation 'de.javagl:obj:0.4.0'
-
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.lifecycle:lifecycle-common-java8:2.2.0'
-
-    implementation 'com.google.android.material:material:1.1.0'
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
@@ -66,4 +73,28 @@ dependencies {
 
     // ARCore SDK
     implementation("com.google.ar:core:1.40.0")
+
+    // マップ画面（現在地の推定）で使う ViewModel・StateFlow・権限のリクエスト
+    implementation("androidx.activity:activity-ktx:1.8.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    // バトル画面（Jetpack Compose）
+    implementation platform('androidx.compose:compose-bom:2026.09.00')
+    implementation 'androidx.activity:activity-compose:1.13.0'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+
+    // バトル画面の AR（床の上でモンスターを戦わせる）と、対戦前の画面の 3D のモンスター
+    implementation 'io.github.sceneview:arsceneview:4.57.0'
+
+    // iOS と同じ Supabase のデータベースで対戦する
+    implementation platform('io.github.jan-tennert.supabase:bom:3.8.0')
+    implementation 'io.github.jan-tennert.supabase:postgrest-kt'
+    implementation 'io.github.jan-tennert.supabase:realtime-kt'
+    implementation 'io.ktor:ktor-client-okhttp:3.6.0'
 }
