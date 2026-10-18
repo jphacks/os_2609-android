@@ -265,7 +265,7 @@ class CaptureArSceneController(
     val shown = listOfNotNull(viewModel.state.value.wildMonster)
     val ids = shown.map { it.id }.toSet()
 
-    // 一覧からいなくなったのは、捕まえられたか逃げたモンスター
+    // 一覧からいなくなったのは、バトルになったか逃げたモンスター
     for (monster in monsters) {
       if (monster.disappearStart == null && monster.wild.id !in ids) monster.disappearStart = now
     }
@@ -373,7 +373,7 @@ class CaptureArSceneController(
     monster.holder.rotation = Rotation(y = Math.toDegrees(monster.yaw.toDouble()).toFloat())
   }
 
-  /** 捕まえられたか逃げたモンスターを縮めていき、縮み終わったら取り除く */
+  /** バトルになったか逃げたモンスターを縮めていき、縮み終わったら取り除く */
   private fun updateDisappearing(now: Float) {
     val iterator = monsters.iterator()
     while (iterator.hasNext()) {
@@ -407,7 +407,7 @@ class CaptureArSceneController(
     viewModel.walked(distance)
   }
 
-  /** タップしたときに呼ぶ。タップした所にモンスターがいたら、ViewModel に伝える */
+  /** タップしたときに呼ぶ。タップした所にモンスターがいたら、ViewModel に伝える（バトルが始まる） */
   fun onTap(event: MotionEvent) {
     // 位置を見失っている間は、カメラの行列が古いので判定しない
     if (!isTracking) return
@@ -421,8 +421,9 @@ class CaptureArSceneController(
     val near = unproject(inverse, x, y, -1f)
     val far = unproject(inverse, x, y, 1f)
 
-    val id = monsters.firstOrNull { it.disappearStart == null && hits(it.model, near, far) }?.wild?.id ?: return
-    viewModel.monsterTapped(id)
+    val monster = monsters.firstOrNull { it.disappearStart == null && hits(it.model, near, far) } ?: return
+    // バトルでは、相手をこのモンスターがいた場所に置く
+    viewModel.monsterTapped(monster.wild.id, monster.holder.worldPosition)
   }
 
   private fun unproject(inverseViewProjection: FloatArray, x: Float, y: Float, z: Float): Float3 {
@@ -539,7 +540,7 @@ class CaptureArSceneController(
     const val TURN_DURATION = 0.4f
     /** 歩き終わってから次に歩き出すまで止まっている時間（秒） */
     val REST_RANGE = 0.5f..2f
-    /** 捕まえたときに縮んで消えるまでの時間（秒） */
+    /** バトルになったときや逃げたときに、縮んで消えるまでの時間（秒） */
     const val DISAPPEAR_DURATION = 0.3f
     /** 矢印が指す、モンスターの足元からの高さ（m）。体の真ん中あたりを指す */
     const val ARROW_TARGET_HEIGHT = 0.5f

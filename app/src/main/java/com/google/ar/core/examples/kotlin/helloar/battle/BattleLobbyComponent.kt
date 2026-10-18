@@ -19,7 +19,10 @@ import androidx.compose.ui.unit.sp
 import com.google.ar.core.examples.kotlin.helloar.model.Monster
 import com.google.ar.core.examples.kotlin.helloar.monster.MonsterModelComponent
 
-/** 対戦前の画面。自分のモンスターを見せ、「バトルする」で対戦相手を探す */
+/**
+ * 対戦前の画面。自分のモンスターを見せ、「バトルする」で対戦相手を探す
+ * 野生のモンスターとのバトルでは、相手のモンスターと「VS」で並べ、「にげる」も置く
+ */
 @Composable
 fun BattleLobbyComponent(
   myMonster: Monster,
@@ -31,13 +34,18 @@ fun BattleLobbyComponent(
   errorMessage: String?,
   onFind: () -> Unit,
   onCancel: () -> Unit,
+  /** 野生のモンスターとのバトルなら、相手のモンスター。ほかのプレイヤーとの対戦なら null（相手は探すまでわからない） */
+  wildMonster: Monster? = null,
+  /** 「にげる」が押されたときに呼ぶ。野生のモンスターとのバトルのときだけ渡す（null ならボタンを出さない） */
+  onFlee: (() -> Unit)? = null,
 ) {
   Column(
     horizontalAlignment = Alignment.CenterHorizontally,
     verticalArrangement = Arrangement.spacedBy(20.dp),
     modifier = Modifier
       .fillMaxSize()
-      .background(BattleStyle.ink)
+      // 野生のモンスターとのバトルでは、後ろで捕獲画面の AR が動いているので、カメラの映像が少し透けて見えるようにする
+      .background(if (wildMonster != null) BattleStyle.ink.copy(alpha = 0.85f) else BattleStyle.ink)
       .padding(24.dp),
   ) {
     Text(
@@ -46,15 +54,21 @@ fun BattleLobbyComponent(
       color = BattleStyle.yellow,
       modifier = Modifier.padding(top = 24.dp),
     )
-    MonsterModelComponent(myMonster, facingDegrees = -25f, modifier = Modifier.size(240.dp))
+    if (wildMonster != null) {
+      // iOS は自分と相手の 3D を並べるが、ここでは名前だけにする
+      // 後ろで捕獲画面の AR（Filament の画面）が動いているので、3D（MonsterModelComponent、これも Filament）を重ねると前後が入れ替わることがある
+      // AR を外すと AR セッションが閉じ、野生のモンスターがいた場所でバトルできなくなる
+      Spacer(Modifier.weight(1f))
+      LobbyNameComponent(myMonster.name, BattleStyle.cyan)
+      Text("VS", style = BattleStyle.display(40.sp), color = BattleStyle.yellow)
+      LobbyNameComponent(wildMonster.name, BattleStyle.pink)
+    } else {
+      MonsterModelComponent(myMonster, facingDegrees = -25f, modifier = Modifier.size(240.dp))
+      LobbyNameComponent(myMonster.name, BattleStyle.cyan)
+    }
     Text(
-      myMonster.name,
-      style = BattleStyle.display(28.sp),
-      color = Color.Black,
-      modifier = Modifier.background(BattleStyle.cyan, slantedRectangle()).padding(horizontal = 16.dp),
-    )
-    Text(
-      "「バトルする」を押した人どうしで対戦できます。画面をタップして攻撃しよう",
+      wildMonster?.let { "野生の${it.name}が勝負をしかけてきた！勝つと捕まえられます。画面をタップして攻撃しよう" }
+        ?: "「バトルする」を押した人どうしで対戦できます。画面をタップして攻撃しよう",
       fontSize = 15.sp,
       color = Color.White.copy(alpha = 0.7f),
       textAlign = TextAlign.Center,
@@ -77,6 +91,19 @@ fun BattleLobbyComponent(
       }
     } else {
       BattleButtonComponent("バトルする", onClick = onFind)
+      onFlee?.let { BattleButtonComponent("にげる", color = Color.White, onClick = it) }
     }
   }
+}
+
+/** 対戦前の画面に出す、モンスターの名前の帯 */
+@Composable
+private fun LobbyNameComponent(name: String, color: Color) {
+  Text(
+    name,
+    style = BattleStyle.display(28.sp),
+    color = Color.Black,
+    maxLines = 1,
+    modifier = Modifier.background(color, slantedRectangle()).padding(horizontal = 16.dp),
+  )
 }

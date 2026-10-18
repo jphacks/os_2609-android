@@ -52,7 +52,7 @@ import java.util.Locale
 import kotlin.random.Random
 
 /**
- * 捕獲成功の画面（iOS の MonsterDetailView）。モンスターをタップして捕まえたときに出す
+ * 捕獲成功の画面（iOS の MonsterDetailView）。野生のモンスターとのバトルに勝って捕まえたときに出す
  * 「GET!!」をたたきつけ、後ろで光の筋を回し、紙吹雪を降らせる（バトル画面と同じ、ビビッドでパキッとした見た目）
  * 3D モデル・名前・大きさを出す。3D は指で回せる
  */

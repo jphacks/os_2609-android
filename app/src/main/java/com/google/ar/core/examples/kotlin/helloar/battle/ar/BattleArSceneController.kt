@@ -19,6 +19,7 @@ import com.google.ar.core.examples.kotlin.helloar.monster.loadMonsterNode
 import com.google.ar.core.examples.kotlin.helloar.viewmodel.BattleViewModel
 import com.google.android.filament.Engine
 import dev.romainguy.kotlin.math.Float3
+import dev.romainguy.kotlin.math.length
 import dev.romainguy.kotlin.math.normalize
 import io.github.sceneview.ar.node.ARCameraNode
 import io.github.sceneview.ar.node.AnchorNode
@@ -31,6 +32,8 @@ import io.github.sceneview.node.ModelNode
 import io.github.sceneview.node.Node
 import io.github.sceneview.node.TextNode
 import kotlin.math.atan2
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -46,6 +49,8 @@ import kotlinx.coroutines.launch
  * iOS の火花と金色の光の粒は、SceneView に粒を出す仕組みがないので、モンスターを光らせる演出で代わりにしている
  *
  * @param scope アニメーションを動かすのに使う。Compose の rememberCoroutineScope（毎フレームの時計を持っている）を渡す
+ * @param wildPosition 野生のモンスターとのバトルで、捕獲画面でそのモンスターがいた場所（ワールド座標、足元）。ほかのプレイヤーとの対戦なら null
+ *   捕獲画面の AR をそのまま使うので（ArHandoff）、床を探し直さず、相手をこの場所に置く
  */
 class BattleArSceneController(
   private val myMonster: Monster,
@@ -55,6 +60,7 @@ class BattleArSceneController(
   private val materialLoader: MaterialLoader,
   private val cameraNode: ARCameraNode,
   private val scope: CoroutineScope,
+  private val wildPosition: Position?,
 ) {
   /** 床が見つかったら、その上に置くアンカー。BattleArComponent がこれを AnchorNode にして、attach() に渡す */
   var floorAnchor by mutableStateOf<Anchor?>(null)
@@ -110,7 +116,13 @@ class BattleArSceneController(
     if (frame.camera.trackingState != TrackingState.TRACKING) return
     cameraPose = frame.camera.pose
     if (floorAnchor == null) {
-      findFloor(session, frame)
+      if (wildPosition != null) {
+        // 捕獲画面で見つけた床の高さ（野生のモンスターの足元）に、カメラの真下でアンカーを置く
+        val pose = frame.camera.pose
+        floorAnchor = session.createAnchor(Pose.makeTranslation(pose.tx(), wildPosition.y, pose.tz()))
+      } else {
+        findFloor(session, frame)
+      }
     }
     updateArrow(frame)
   }
@@ -219,9 +231,27 @@ class BattleArSceneController(
     val z = cameraPose?.zAxis ?: floatArrayOf(0f, 0f, 1f)
     val flat = Float3(-z[0], 0f, -z[2])
     val forward = if (flat.x * flat.x + flat.z * flat.z > 0.01f) normalize(flat) else Float3(0f, 0f, -1f)
-    val right = Float3(-forward.z, 0f, forward.x)
-    myHome = forward * MY_DISTANCE - right * SIDE_OFFSET
-    opponentHome = forward * OPPONENT_DISTANCE + right * SIDE_OFFSET
+    val wild = wildPosition
+    if (wild != null) {
+      // 野生のモンスターとのバトル：相手は、捕獲画面でいた場所に置く（遠ければ、同じ方向のまま OPPONENT_DISTANCE まで引き寄せる）
+      // 自分は、自分（カメラ）と相手を結ぶ線の上で、相手の手前に置く（相手が真正面になるよう、左にずらす）
+      // アンカーは回転なしで置いたので、ワールド座標からアンカーの位置を引くと、アンカーから見た位置になる
+      // AnchorNode の位置はフレームごとにアンカーに合わせるので、置いた直後はまだ合っていないことがある。アンカーの位置を直接使う
+      val anchor = floorAnchor?.pose ?: return
+      val camera = cameraPose?.let { Float3(it.tx() - anchor.tx(), 0f, it.tz() - anchor.tz()) } ?: Float3(0f)
+      val toWild = Float3(wild.x - anchor.tx(), 0f, wild.z - anchor.tz()) - camera
+      val wildDistance = length(toWild)
+      val direction = if (wildDistance > 0.1f) toWild / wildDistance else forward
+      val right = Float3(-direction.z, 0f, direction.x)
+      val opponentDistance = min(wildDistance, OPPONENT_DISTANCE)
+      val myDistance = max(min(MY_DISTANCE, opponentDistance - HANDOFF_MINIMUM_SPACING), HANDOFF_MINIMUM_MY_DISTANCE)
+      opponentHome = camera + direction * opponentDistance
+      myHome = camera + direction * myDistance - right * SIDE_OFFSET
+    } else {
+      val right = Float3(-forward.z, 0f, forward.x)
+      myHome = forward * MY_DISTANCE - right * SIDE_OFFSET
+      opponentHome = forward * OPPONENT_DISTANCE + right * SIDE_OFFSET
+    }
 
     // モデルの読み込みは時間がかかるので、読み込み終わってから床に置く
     val me = loadMonsterNode(engine, modelLoader, myMonster, myHeight) ?: return
@@ -437,6 +467,12 @@ class BattleArSceneController(
     const val OPPONENT_DISTANCE = 2.5f
     /** 正面から左右にずらす距離（m）。自分は左、相手は右に置き、斜めに向かい合わせる */
     const val SIDE_OFFSET = 0.35f
+    /**
+     * 野生のモンスターとのバトルで、自分のモンスターを置く距離の最小（m）と、相手との間を空ける距離の最小（m）
+     * 相手が近くにいたときも、カメラに近すぎて画面からはみ出したり、2 体が重なったりしないようにする
+     */
+    const val HANDOFF_MINIMUM_MY_DISTANCE = 0.5f
+    const val HANDOFF_MINIMUM_SPACING = 0.6f
     /** 床とみなす面の大きさの最小（m）と、カメラから床までの高さの最小（m）。これより高い面は机などとみなす */
     const val MINIMUM_FLOOR_SIZE = 0.2f
     const val MINIMUM_FLOOR_DEPTH = 0.5f
