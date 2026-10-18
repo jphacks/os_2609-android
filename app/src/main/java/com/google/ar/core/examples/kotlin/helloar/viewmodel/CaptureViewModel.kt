@@ -26,16 +26,12 @@ data class CaptureState(
   val notice: String? = null,
   /** 詳細画面に出している、捕獲したモンスター。詳細画面を開いていなければ null */
   val detailMonster: Monster? = null,
-  /** 出現しているモンスター。一度に出るのは 1 体まで */
+  /**
+   * 出現しているモンスター。一度に出るのは 1 体まで
+   * CaptureRenderer はこれに合わせて 3D のモンスターを置いたり消したりする。床が見つかり直したら、その近くに置き直す
+   */
   val wildMonster: WildMonster? = null,
 ) {
-  /**
-   * AR に出すモンスター。CaptureRenderer はこの一覧に合わせて 3D のモンスターを置いたり消したりする
-   * 床が見つかっていない間は出さない（床が見つかり直したら、その近くに出し直す）
-   */
-  val shownMonsters: List<WildMonster>
-    get() = if (isFloorFound && wildMonster != null) listOf(wildMonster) else emptyList()
-
   val statusMessage: String
     get() = when {
       notice != null -> notice
