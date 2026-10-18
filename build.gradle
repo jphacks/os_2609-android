@@ -16,14 +16,18 @@
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
-    ext.kotlin_version = '1.9.20'
+    ext.kotlin_version = '2.4.21'
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.12.3'
+        classpath 'com.android.tools.build:gradle:9.2.1'
+        // AGP 9 は Kotlin を内蔵している。ここで指定したバージョンの Kotlin が使われる（SceneView が Kotlin 2.4 で作られているため）
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        // バトル画面（Jetpack Compose）と、Supabase の行を読み書きするため（@Serializable）
+        classpath "org.jetbrains.kotlin:compose-compiler-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
 
 
 
@@ -48,5 +52,5 @@ allprojects {
 }
 
 task clean(type: Delete) {
-    delete rootProject.buildDir
+    delete rootProject.layout.buildDirectory
 }

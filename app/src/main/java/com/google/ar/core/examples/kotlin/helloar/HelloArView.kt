@@ -15,9 +15,11 @@
  */
 package com.google.ar.core.examples.kotlin.helloar
 
+import android.content.Intent
 import android.content.res.Resources
 import android.opengl.GLSurfaceView
 import android.view.View
+import android.widget.Button
 import android.widget.ImageButton
 import android.widget.PopupMenu
 import androidx.appcompat.app.AlertDialog
@@ -26,6 +28,7 @@ import androidx.lifecycle.LifecycleOwner
 import com.google.ar.core.Config
 import com.google.ar.core.examples.java.common.helpers.SnackbarHelper
 import com.google.ar.core.examples.java.common.helpers.TapHelper
+import com.google.ar.core.examples.kotlin.helloar.battle.BattleActivity
 
 /** Contains UI elements for Hello AR. */
 class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
@@ -46,6 +49,12 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
           show()
         }
       }
+    }
+
+  /** マルチバトルの画面を開く。開いている間、この画面の AR セッションは onPause で止まる（AR セッションを同時に 2 つ動かさない） */
+  val battleButton =
+    root.findViewById<Button>(R.id.battle_button).apply {
+      setOnClickListener { activity.startActivity(Intent(activity, BattleActivity::class.java)) }
     }
 
   val session

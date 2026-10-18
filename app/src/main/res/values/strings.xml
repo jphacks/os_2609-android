@@ -32,6 +32,7 @@
   </string-array>
 
   <string translatable="false" name="searching_planes">Searching for surfaces...</string>
+  <string translatable="false" name="battle_button">マルチバトル</string>
   <string translatable="false" name="waiting_taps">Tap on a surface to place an object.</string>
 
 </resources>

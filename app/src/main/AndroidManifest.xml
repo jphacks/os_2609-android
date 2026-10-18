@@ -19,6 +19,8 @@
     package="com.google.ar.core.examples.kotlin.helloar">
 
   <uses-permission android:name="android.permission.CAMERA"/>
+  <!-- 対戦（Supabase）に使う -->
+  <uses-permission android:name="android.permission.INTERNET"/>
   <!-- Required to post notifications for Android T+ devices -->
 
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -51,7 +53,14 @@
         <category android:name="android.intent.category.LAUNCHER"/>
       </intent-filter>
     </activity>
+    <!-- マルチバトル（HelloArActivity の「マルチバトル」ボタンから開く） -->
+    <activity
+        android:name="com.google.ar.core.examples.kotlin.helloar.battle.BattleActivity"
+        android:exported="false"
+        android:theme="@style/Theme.AppCompat.NoActionBar"
+        android:screenOrientation="portrait"/>
     <!-- Indicates whether "Google Play Services for AR" (ARCore) is "required" or "optional". -->
-    <meta-data android:name="com.google.ar.core" android:value="required" />
+    <!-- SceneView は optional にしているが、このアプリは AR が必須なので required で上書きする -->
+    <meta-data android:name="com.google.ar.core" android:value="required" tools:replace="android:value" />
   </application>
 </manifest>
