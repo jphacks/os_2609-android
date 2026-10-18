@@ -21,8 +21,8 @@ import com.google.ar.core.examples.java.common.helpers.SnackbarHelper
 import com.google.ar.core.examples.java.common.helpers.TapHelper
 import com.google.ar.core.examples.java.common.samplerender.SampleRender
 import com.google.ar.core.examples.kotlin.common.helpers.ARCoreSessionLifecycleHelper
+import com.google.ar.core.examples.kotlin.helloar.ARAppApplication
 import com.google.ar.core.examples.kotlin.helloar.R
-import com.google.ar.core.examples.kotlin.helloar.service.PreferencesMonsterCollection
 import com.google.ar.core.examples.kotlin.helloar.viewmodel.CaptureViewModel
 import com.google.ar.core.exceptions.CameraNotAvailableException
 import com.google.ar.core.exceptions.UnavailableApkTooOldException
@@ -43,7 +43,7 @@ class CaptureActivity : AppCompatActivity() {
   }
 
   private val viewModel: CaptureViewModel by viewModels {
-    CaptureViewModel.factory(PreferencesMonsterCollection(applicationContext))
+    CaptureViewModel.factory((application as ARAppApplication).monsterCollection)
   }
 
   lateinit var arCoreSessionHelper: ARCoreSessionLifecycleHelper

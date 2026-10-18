@@ -22,6 +22,12 @@ app/src/main/java/com/google/ar/core/examples/kotlin/helloar/
 - モンスターの 3D モデルは `assets/monsters/*.glb`（Quaternius「Ultimate Monsters」、CC0）。`scripts/convert_monster_models.py` で glTF から作る。
 - 捕獲画面の `model/Monster`（Kenney の動物）は iOS と `modelName` が違うので、バトルには使わない。
 
+## 最初のモンスター選び
+
+- バトルに出すモンスターがまだ決まっていなければ、マップ画面（`map/MapActivity`）の代わりに `starter/StarterMonsterActivity` を開く。決めたら捕獲画面へ進み、捕獲画面から戻るとマップ画面になる
+- 選んだモンスターは捕まえたものとして保存し、バトルに出すモンスターにもする（`MonsterCollection.setBattleMonster`）。iOS と同じく、バトルの自分のモンスターはまだランダムで、`battleMonster` は使っていない
+- 保存先（`MonsterCollection`）はアプリで 1 つだけ作る（`ARAppApplication.monsterCollection`）
+
 ## プロジェクト設定
 
 - AGP 9.2（Kotlin は AGP に組み込み。Kotlin のバージョンは `build.gradle` の `kotlin_version`）、Gradle 9.4、Java 21（SceneView が使う kotlin-math が Java 21 向けのため）。
