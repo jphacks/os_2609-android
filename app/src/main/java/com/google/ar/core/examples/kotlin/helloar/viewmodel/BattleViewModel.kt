@@ -10,7 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.ar.core.examples.kotlin.helloar.logic.BattleEngine
 import com.google.ar.core.examples.kotlin.helloar.logic.FeverLottery
 import com.google.ar.core.examples.kotlin.helloar.model.battle.BattleAction
-import com.google.ar.core.examples.kotlin.helloar.model.battle.BattleMonster
+import com.google.ar.core.examples.kotlin.helloar.model.Monster
 import com.google.ar.core.examples.kotlin.helloar.model.battle.BattleState
 import com.google.ar.core.examples.kotlin.helloar.model.battle.Fighter
 import com.google.ar.core.examples.kotlin.helloar.model.battle.FighterID
@@ -105,10 +105,10 @@ class BattleViewModel(
    * 次の対戦で使う自分のモンスター
    * 【仮】今はランダム（iOS と同じ）。捕まえたモンスターから選べるようにしたら、ここと leaveBattle() の選び直しを置き換える
    */
-  var myMonster by mutableStateOf(BattleMonster.ALL.random())
+  var myMonster by mutableStateOf(Monster.ALL.random())
     private set
   /** 対戦中の相手のモンスター。マッチングするまでは null */
-  var opponentMonster by mutableStateOf<BattleMonster?>(null)
+  var opponentMonster by mutableStateOf<Monster?>(null)
     private set
   var phase by mutableStateOf(Phase.LOBBY)
     private set
@@ -258,7 +258,7 @@ class BattleViewModel(
   /** 結果を見終わったときに呼ぶ。ロビーに戻る。次の対戦では別のモンスターを使う */
   fun leaveBattle() {
     reset()
-    myMonster = BattleMonster.ALL.random()
+    myMonster = Monster.ALL.random()
   }
 
   /** 画面を閉じたら、相手探しや対戦をやめる（アプリ全体の scope で、閉じたあとも最後まで片付ける） */
@@ -317,7 +317,7 @@ class BattleViewModel(
     phase = Phase.LOBBY
   }
 
-  private fun startBattle(opponentMonster: BattleMonster) {
+  private fun startBattle(opponentMonster: Monster) {
     this.opponentMonster = opponentMonster
     state = BattleState(
       Fighter(id = MY_ID, name = myMonster.name, maxHP = BattleEngine.MAX_HP),

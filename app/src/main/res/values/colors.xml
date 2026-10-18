@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-  <!-- 捕獲成功の画面の色。iOS の BattleStyle と同じ -->
-  <color name="capture_ink">#0A0A1A</color>
-  <color name="capture_pink">#FF1A8C</color>
-  <color name="capture_cyan">#00E5FF</color>
-  <color name="capture_yellow">#FFEB00</color>
-  <color name="capture_lime">#99FF00</color>
-</resources>

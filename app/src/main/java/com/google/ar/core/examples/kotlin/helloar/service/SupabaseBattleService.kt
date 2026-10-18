@@ -3,7 +3,7 @@ package com.google.ar.core.examples.kotlin.helloar.service
 import android.os.SystemClock
 import android.util.Log
 import com.google.ar.core.examples.kotlin.helloar.model.battle.BattleAction
-import com.google.ar.core.examples.kotlin.helloar.model.battle.BattleMonster
+import com.google.ar.core.examples.kotlin.helloar.model.Monster
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
@@ -106,7 +106,7 @@ class SupabaseBattleService(url: String, anonKey: String) : BattleService {
   private var sendJob: Job? = null
   private var didFailToSend = false
 
-  override suspend fun findOpponent(monster: BattleMonster): BattleMonster {
+  override suspend fun findOpponent(monster: Monster): Monster {
     leave()
     try {
       return joinAndWait(monster)
@@ -119,7 +119,7 @@ class SupabaseBattleService(url: String, anonKey: String) : BattleService {
   }
 
   /** join_battle で部屋に入り（または作り）、相手がそろうまで待つ */
-  private suspend fun joinAndWait(monster: BattleMonster): BattleMonster {
+  private suspend fun joinAndWait(monster: Monster): Monster {
     // 途中でキャンセルされても通信は最後まで行い、部屋の ID を受け取ってから片付けられるようにする
     // （通信ごと取り消すと、サーバーには部屋ができたのに ID がわからず消せなくなる）
     val params = buildJsonObject {
@@ -167,7 +167,7 @@ class SupabaseBattleService(url: String, anonKey: String) : BattleService {
       keepWaitingJob.cancel()
     }
 
-    return opponentMonsterName?.let(BattleMonster::named) ?: throw ServiceError.InvalidData()
+    return opponentMonsterName?.let(Monster::named) ?: throw ServiceError.InvalidData()
   }
 
   override fun opponentActions(): Flow<BattleAction> = callbackFlow {

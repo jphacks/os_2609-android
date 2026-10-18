@@ -23,7 +23,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.ar.core.examples.kotlin.helloar.battle.MonsterModelComponent
+import com.google.ar.core.examples.kotlin.helloar.monster.MonsterModelComponent
 import com.google.ar.core.examples.kotlin.helloar.viewmodel.StarterMonsterViewModel
 
 /** これだけ横にスワイプしたら、次（前）のモンスターを出す */

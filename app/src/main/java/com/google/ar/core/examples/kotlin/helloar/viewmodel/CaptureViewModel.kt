@@ -28,7 +28,7 @@ data class CaptureState(
   val detailMonster: Monster? = null,
   /**
    * 出現しているモンスター。一度に出るのは 1 体まで
-   * CaptureRenderer はこれに合わせて 3D のモンスターを置いたり消したりする。床が見つかり直したら、その近くに置き直す
+   * CaptureArSceneController はこれに合わせて 3D のモンスターを置いたり消したりする。床が見つかり直したら、その近くに置き直す
    */
   val wildMonster: WildMonster? = null,
 ) {
@@ -42,8 +42,8 @@ data class CaptureState(
 }
 
 /**
- * AR 捕獲画面の状態とルール。ARCore や GL には触らず、状態だけを持つ（iOS の ARCaptureViewModel）
- * 歩いた距離に応じてモンスターを出し、3D での配置や動きは CaptureRenderer が担当する
+ * AR 捕獲画面の状態とルール。ARCore や SceneView には触らず、状態だけを持つ（iOS の ARCaptureViewModel）
+ * 歩いた距離に応じてモンスターを出し、3D での配置や動きは CaptureArSceneController が担当する
  * モンスターをタップすると捕獲成功として保存し、詳細画面を開く
  * （iOS はタップでバトルになり、勝つと捕獲になる。Android にバトルを移植したら、monsterTapped でバトルを始める）
  * モンスターはこの端末の中だけに出る（ほかのプレイヤーとは共有しない）
@@ -70,7 +70,7 @@ class CaptureViewModel(private val collection: MonsterCollection) : ViewModel() 
   private var noticeJob: Job? = null
   private var escapeJob: Job? = null
 
-  /** 床のアンカーを置いた（または外れた）ときに CaptureRenderer から呼ばれる */
+  /** 床のアンカーを置いた（または外れた）ときに CaptureArSceneController から呼ばれる */
   fun floorStateChanged(isFound: Boolean) {
     _state.update { it.copy(isFloorFound = isFound) }
     if (isFound) {
@@ -88,7 +88,7 @@ class CaptureViewModel(private val collection: MonsterCollection) : ViewModel() 
   }
 
   /**
-   * 自分が床の上を歩いたときに CaptureRenderer から呼ばれる。distance は歩いた距離（m）
+   * 自分が床の上を歩いたときに CaptureArSceneController から呼ばれる。distance は歩いた距離（m）
    * 決まった距離を歩くと、モンスターが出る。出ている間と、詳細画面を出している間は数えない
    */
   fun walked(distance: Float) {
@@ -104,7 +104,7 @@ class CaptureViewModel(private val collection: MonsterCollection) : ViewModel() 
     startEscapeTimer()
   }
 
-  /** モンスターがタップされたときに CaptureRenderer から呼ばれる。離れていても捕まえられる */
+  /** モンスターがタップされたときに CaptureArSceneController から呼ばれる。離れていても捕まえられる */
   fun monsterTapped(id: UUID) {
     val target = _state.value.wildMonster ?: return
     if (target.id != id) return

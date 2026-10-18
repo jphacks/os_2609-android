@@ -1,7 +1,7 @@
 package com.google.ar.core.examples.kotlin.helloar.service
 
 import com.google.ar.core.examples.kotlin.helloar.model.battle.BattleAction
-import com.google.ar.core.examples.kotlin.helloar.model.battle.BattleMonster
+import com.google.ar.core.examples.kotlin.helloar.model.Monster
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -15,7 +15,7 @@ interface BattleService {
    * 待っている間にコルーチンがキャンセルされたら、待つのをやめる
    * 見つかった相手のモンスターを返す
    */
-  suspend fun findOpponent(monster: BattleMonster): BattleMonster
+  suspend fun findOpponent(monster: Monster): Monster
 
   /**
    * 相手の行動が、相手が行った順に流れてくる

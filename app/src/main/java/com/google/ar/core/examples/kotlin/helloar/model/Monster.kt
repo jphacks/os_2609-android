@@ -1,50 +1,51 @@
 package com.google.ar.core.examples.kotlin.helloar.model
 
-/** AR 空間に出現するモンスターのデータ */
+/**
+ * モンスターのデータ（iOS の Monster と同じ 16 体）。捕獲画面とバトルで使う
+ * 対戦相手には modelName を送るので、名前・modelName は iOS と完全に同じにする（違うと iOS で相手のモンスターがわからず、対戦できない）
+ * 捕まえたモンスターも modelName で保存するので、捕まえた種類をそのままバトルに出せる
+ */
 data class Monster(
   val name: String,
-  /** 見た目に使う 3D モデルのファイル名（assets/models に置いた .glb。拡張子は付けない） */
+  /** 見た目に使う 3D モデルのファイル名（assets/monsters に置いた .glb。拡張子は付けない） */
   val modelName: String,
-  /**
-   * 体の大きさ（メートル）。モデルの高さがこの長さになる。モンスターごとに変えて、大小の違いを出す
-   * ARCore の 1.0 は現実の 1m
-   */
+  /** 体の大きさ（メートル）。モデルの高さがこの長さになる。ARCore の 1.0 は現実の 1m */
   val size: Float,
+  /** 通常攻撃のときに流すアニメーション */
+  val normalAttack: MonsterAnimation,
+  /** 必殺技のときに流すアニメーション */
+  val specialAttack: MonsterAnimation,
 ) {
   /** assets の中での 3D モデルの場所 */
   val modelAssetPath: String
-    get() = "models/$modelName.glb"
+    get() = "monsters/$modelName.glb"
 
   companion object {
     /**
-     * 出現するモンスターの一覧。モデルは Kenney「Cube Pets」（CC0、assets/models/License.txt）
-     * iOS（Quaternius のモンスター）とはモデルが違うので、modelName も iOS とは別になっている
+     * 出現する・バトルに出すモンスターの一覧。モデルは Quaternius「Ultimate Monsters」（CC0、assets/monsters/License.txt）
+     * 攻撃のアニメーションは、何かを持っているモンスター（バニー、デーモン、キノコキング、オーク、スカルオーク）は
+     * 通常攻撃で武器を振って必殺技で跳びかかる。ほかはパンチして、必殺技で武器を振る動きをする
      */
     val ALL = listOf(
-      Monster("ビーバー", "animal-beaver", 0.6f),
-      Monster("ハチ", "animal-bee", 0.5f),
-      Monster("ウサギ", "animal-bunny", 0.6f),
-      Monster("ネコ", "animal-cat", 0.5f),
-      Monster("イモムシ", "animal-caterpillar", 0.4f),
-      Monster("ヒヨコ", "animal-chick", 0.4f),
-      Monster("ウシ", "animal-cow", 1.2f),
-      Monster("カニ", "animal-crab", 0.4f),
-      Monster("シカ", "animal-deer", 1.2f),
-      Monster("イヌ", "animal-dog", 0.6f),
-      Monster("ゾウ", "animal-elephant", 1.6f),
-      Monster("サカナ", "animal-fish", 0.5f),
-      Monster("キツネ", "animal-fox", 0.6f),
-      Monster("キリン", "animal-giraffe", 1.8f),
-      Monster("イノシシ", "animal-hog", 0.8f),
-      Monster("コアラ", "animal-koala", 0.6f),
-      Monster("ライオン", "animal-lion", 1.1f),
-      Monster("サル", "animal-monkey", 0.7f),
-      Monster("パンダ", "animal-panda", 1.0f),
-      Monster("オウム", "animal-parrot", 0.5f),
-      Monster("ペンギン", "animal-penguin", 0.7f),
-      Monster("ブタ", "animal-pig", 0.7f),
-      Monster("シロクマ", "animal-polar", 1.2f),
-      Monster("トラ", "animal-tiger", 1.1f),
+      Monster("エイリアン", "monster-alien", 1.25f, MonsterAnimation.PUNCH, MonsterAnimation.WEAPON),
+      Monster("バード", "monster-birb", 1.05f, MonsterAnimation.PUNCH, MonsterAnimation.WEAPON),
+      Monster("ブルーデーモン", "monster-blue-demon", 1.55f, MonsterAnimation.PUNCH, MonsterAnimation.WEAPON),
+      Monster("バニー", "monster-bunny", 1.05f, MonsterAnimation.WEAPON, MonsterAnimation.JUMP),
+      Monster("カクトロ", "monster-cactoro", 1.25f, MonsterAnimation.PUNCH, MonsterAnimation.WEAPON),
+      Monster("デーモン", "monster-demon", 1.65f, MonsterAnimation.WEAPON, MonsterAnimation.JUMP),
+      Monster("ディノ", "monster-dino", 1.4f, MonsterAnimation.PUNCH, MonsterAnimation.WEAPON),
+      Monster("フィッシュ", "monster-fish", 1.15f, MonsterAnimation.PUNCH, MonsterAnimation.WEAPON),
+      Monster("フロッグ", "monster-frog", 1.0f, MonsterAnimation.PUNCH, MonsterAnimation.WEAPON),
+      Monster("モンクルース", "monster-monkroose", 1.2f, MonsterAnimation.PUNCH, MonsterAnimation.WEAPON),
+      Monster("キノコキング", "monster-mushroom-king", 1.55f, MonsterAnimation.WEAPON, MonsterAnimation.JUMP),
+      Monster("ニンジャ", "monster-ninja", 1.25f, MonsterAnimation.PUNCH, MonsterAnimation.WEAPON),
+      Monster("オーク", "monster-orc", 1.45f, MonsterAnimation.WEAPON, MonsterAnimation.JUMP),
+      Monster("スカルオーク", "monster-orc-skull", 1.55f, MonsterAnimation.WEAPON, MonsterAnimation.JUMP),
+      Monster("トライバル", "monster-tribal", 1.35f, MonsterAnimation.PUNCH, MonsterAnimation.WEAPON),
+      Monster("イエティ", "monster-yeti", 1.8f, MonsterAnimation.PUNCH, MonsterAnimation.WEAPON),
     )
+
+    /** モデル名からモンスターを探す。対戦相手のモンスターはモデル名で送られてくる */
+    fun named(modelName: String): Monster? = ALL.firstOrNull { it.modelName == modelName }
   }
 }
