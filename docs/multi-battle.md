@@ -43,7 +43,7 @@ iOS アプリのマルチバトル（Supabase で、iOS・Android のどちら�
 - アニメーションは glb の中の名前（`Idle`、`Punch` など）で選ぶ。切り替えるときは 0.2 秒混ぜる（iOS の `MonsterAnimator` と同じ使い方にする）。
 - 床が見つかったら、カメラの前 1.1m に自分（左に 0.35m）、2.5m に相手（右に 0.35m）を置いて向かい合わせる。
 - iOS の火花・金色の光の粒は SceneView では出せないので、モンスターの材質を光らせて代わりにする（白：攻撃が当たった、赤の点滅：相手の必殺技の予告、金：フィーバー中）。
-- 効果音はまだ作らない（振動だけ）。
+- 効果音は iOS と同じく、音のファイルを使わずにその場で波形を作って鳴らす（`BattleSoundPlayer`。Android では `AudioTrack` を使う）。
 - Supabase の URL と anon key は `local.properties`（コミットしない）に書く。書いていなければ CPU が相手になる（`CPUBattleService`、⚠️ 開発用）。
 
 ### 進め方

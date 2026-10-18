@@ -1,9 +1,12 @@
 package com.google.ar.core.examples.kotlin.helloar.battle
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.google.ar.core.examples.kotlin.helloar.viewmodel.BattleViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * 対戦画面（iOS の BattleView）。「バトルする」で対戦相手を探し、見つかったら対戦が始まる
@@ -17,6 +20,10 @@ fun BattleScreen(viewModel: BattleViewModel) {
   // 待ったままにすると、隠れても部屋がしばらく残り、ほかの人がいない相手とつながってしまう
   LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
     viewModel.cancelSearch()
+  }
+  // 効果音は作るのに少し時間がかかるので、対戦が始まる前に裏で作っておく
+  LaunchedEffect(Unit) {
+    withContext(Dispatchers.Default) { BattleSoundPlayer.prepare() }
   }
 
   val me = viewModel.me

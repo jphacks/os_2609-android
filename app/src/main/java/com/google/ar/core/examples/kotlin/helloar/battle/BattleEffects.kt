@@ -43,6 +43,7 @@ import kotlinx.coroutines.isActive
 // バトル画面の演出（タップの波紋、続けて当てた回数、画面の光、画面の縁の光、へとへと、よけた）と振動
 // フィーバー・相手の必殺技の予告・チャンス・勝利・結果は BattleBannerComponents にある
 // 踏み込み、モンスターが光る演出、ダメージの数字は AR の中で見せる（BattleArSceneController）
+// 効果音は BattleSoundPlayer が鳴らす
 
 /** 振動の種類（iOS の sensoryFeedback に近いものを選ぶ）。本体の設定で振動を切っているときは鳴らない */
 enum class BattleHaptic { LIGHT, RIGID, HEAVY, SUCCESS, WARNING, ERROR }
