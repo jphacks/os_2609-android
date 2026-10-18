@@ -12,6 +12,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -34,7 +35,11 @@ class MapActivity : AppCompatActivity() {
     /** BLE のスキャンに要る権限。Android 12 から Bluetooth の権限が分かれた */
     private val REQUIRED_PERMISSIONS =
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.ACCESS_FINE_LOCATION)
+        arrayOf(
+          Manifest.permission.BLUETOOTH_SCAN,
+          Manifest.permission.ACCESS_FINE_LOCATION,
+          Manifest.permission.ACCESS_COARSE_LOCATION,
+        )
       } else {
         arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
       }
@@ -52,13 +57,16 @@ class MapActivity : AppCompatActivity() {
       if (hasPermissions()) {
         viewModel.start()
       } else {
-        Toast.makeText(this, "現在地を調べるには、付近のデバイスと位置情報の許可が必要です", Toast.LENGTH_LONG).show()
+        // 「おおよその位置情報」だけを許可されたときも、ここに来る（ビーコンの受信には「正確な位置情報」が要る）
+        Toast.makeText(this, "現在地を調べるには、付近のデバイスと「正確な位置情報」の許可が必要です", Toast.LENGTH_LONG).show()
       }
     }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_map)
+    // 背景が白いので、ステータスバーの時刻やアイコンを暗い色にする
+    WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = true
 
     val statusText = findViewById<TextView>(R.id.status_text)
     val indoorMap = findViewById<IndoorMapView>(R.id.indoor_map)
@@ -102,7 +110,7 @@ class MapActivity : AppCompatActivity() {
 
   private fun makeScanner(): BeaconScanner =
     if (isEmulator()) {
-      DummyBeaconScanner.walkingThrough(Location.REGISTERED)
+      DummyBeaconScanner(Location.REGISTERED)
     } else {
       BleBeaconScanner(applicationContext)
     }

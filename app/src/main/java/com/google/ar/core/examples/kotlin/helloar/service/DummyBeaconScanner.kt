@@ -20,31 +20,18 @@ import kotlinx.coroutines.launch
 
 /**
  * 【開発用】ESP32 がなくても動かせるダミー実装
- * 指定した地点の RSSI のパターンに少し揺れを加えて、本物のビーコンのように流し続ける
+ * 渡した地点を順番に巡り続け、その場所の RSSI のパターンに少し揺れを加えて、本物のビーコンのように流し続ける
+ * 最後の地点の次は最初の地点へ戻る。歩いている間は、2 地点のパターンを歩いた割合で混ぜて流す（地点と地点の間にいる状態を作る）
  */
-class DummyBeaconScanner private constructor(
-  /** 巡る地点の RSSI のパターン。1 つだけならそこに立ち続ける */
-  private val route: List<List<Int>>,
+class DummyBeaconScanner(
+  locations: List<Location>,
   /** 1 つの地点に立ち止まる時間（秒） */
-  private val stayDuration: Double,
+  private val stayDuration: Double = 4.0,
   /** 次の地点まで歩く時間（秒） */
-  private val walkDuration: Double,
+  private val walkDuration: Double = 6.0,
 ) : BeaconScanner {
-
-  /** 初期値は登録済みの最初の地点（入口）に立っているときのパターン */
-  constructor(location: Location = Location.REGISTERED[0]) : this(listOf(location.fingerprint), 0.0, 0.0)
-
-  companion object {
-    /**
-     * 地点を順番に巡り続ける。最後の地点の次は最初の地点へ戻る
-     * 歩いている間は、2 地点のパターンを歩いた割合で混ぜて流す（地点と地点の間にいる状態を作る）
-     */
-    fun walkingThrough(
-      locations: List<Location>,
-      stayDuration: Double = 4.0,
-      walkDuration: Double = 6.0,
-    ) = DummyBeaconScanner(locations.map { it.fingerprint }, stayDuration, walkDuration)
-  }
+  /** 巡る地点の RSSI のパターン。1 つだけならそこに立ち続ける */
+  private val route = locations.map { it.fingerprint }
 
   override var onReceive: ((beaconName: String, rssi: Int) -> Unit)? = null
 

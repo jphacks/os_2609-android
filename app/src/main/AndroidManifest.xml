@@ -24,7 +24,9 @@
   <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
   <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
   <!-- BLUETOOTH_SCAN に neverForLocation を付けるとビーコンの結果が除かれることがあるので、位置情報の権限ももらう -->
+  <!-- Android 12 からは FINE を求めるときに COARSE も一緒に求める（ユーザーは「おおよそ」だけを選ぶこともできる） -->
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
   <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
   <!-- 対戦（Supabase）に使う -->
   <uses-permission android:name="android.permission.INTERNET"/>
