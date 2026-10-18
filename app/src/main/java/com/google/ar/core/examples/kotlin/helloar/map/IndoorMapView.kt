@@ -13,6 +13,7 @@ import android.util.TypedValue
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.withClip
 import com.google.ar.core.examples.kotlin.helloar.R
 import com.google.ar.core.examples.kotlin.helloar.model.Location
 import com.google.ar.core.examples.kotlin.helloar.model.MapPosition
@@ -92,20 +93,17 @@ class IndoorMapView @JvmOverloads constructor(
   }
 
   override fun onDraw(canvas: Canvas) {
-    canvas.save()
-    canvas.clipPath(clipPath)
+    canvas.withClip(clipPath) {
+      // 床
+      drawRect(bounds, floorPaint)
 
-    // 床
-    canvas.drawRect(bounds, floorPaint)
+      for (location in locations) {
+        drawMarker(this, location, isCurrent = location.id == currentLocation?.id)
+      }
 
-    for (location in locations) {
-      drawMarker(canvas, location, isCurrent = location.id == currentLocation?.id)
+      // プレイヤーは一番手前に描く
+      displayedPosition?.let { drawPlayer(this, it) }
     }
-
-    // プレイヤーは一番手前に描く
-    displayedPosition?.let { drawPlayer(canvas, it) }
-
-    canvas.restore()
   }
 
   override fun onDetachedFromWindow() {
