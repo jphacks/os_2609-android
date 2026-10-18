@@ -40,6 +40,7 @@ private object BattleServices {
   /**
    * local.properties に Supabase の接続先が書いてあれば Supabase で対戦し、なければ CPU が相手になる
    * ⚠️ 開発用：ここで CPUBattleService を使うのは開発中だけ。リリースするときは SupabaseBattleService だけにする
+   * （CPUBattleService 自体は、捕獲画面の野生のモンスターとのバトルで使うので消さない）
    */
   val shared: BattleService by lazy {
     if (SupabaseConfig.isConfigured) {

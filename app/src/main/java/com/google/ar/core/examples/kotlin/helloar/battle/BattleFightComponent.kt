@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.google.ar.core.examples.kotlin.helloar.battle.ar.ArHandoff
 import com.google.ar.core.examples.kotlin.helloar.battle.ar.BattleArComponent
 import com.google.ar.core.examples.kotlin.helloar.model.Monster
 import com.google.ar.core.examples.kotlin.helloar.model.battle.Fighter
@@ -59,6 +60,13 @@ fun BattleFightComponent(
   opponent: Fighter,
   myMonster: Monster,
   opponentMonster: Monster,
+  /** 野生のモンスターとのバトルで、捕獲画面から引き継ぐ AR。ほかのプレイヤーとの対戦なら null */
+  arHandoff: ArHandoff?,
+  /**
+   * 野生のモンスターとのバトルで、勝ち負けの演出を見せ終わったときに呼ぶ
+   * 渡したときは勝敗の結果（BattleResultComponent）を出さない。null なら結果を出し、ロビーに戻るボタンを置く
+   */
+  onFinish: ((BattleViewModel.Outcome) -> Unit)?,
 ) {
   /** タップした位置の波紋。クールダウン中でも出るので、タップが届いているかがわかる */
   var tapRipple by remember { mutableStateOf<TapRipple?>(null) }
@@ -148,7 +156,7 @@ fun BattleFightComponent(
     if (current.hp == 0 || (!hit.isDodged && now >= mySpecialEndsAt)) {
       myAnimation = reactionAnimation(current.hp, hit)
     }
-    // 攻撃を受けたら、カメラの映像ごと揺らす
+    // 攻撃を受けたら、カメラの映像ごと揺らす（野生のモンスターとのバトルでは揺れない）
     for (x in listOf(-12f, 12f, -6f, 0f)) {
       shake.animateTo(x, tween(50))
     }
@@ -192,7 +200,7 @@ fun BattleFightComponent(
     if (isResting) view.perform(BattleHaptic.ERROR)
   }
 
-  // 決着が確定したら、勝った側が喜び、少し待ってから結果を出す
+  // 決着が確定したら、勝った側が喜び、少し待ってから結果を出す（野生のモンスターとのバトルでは捕獲画面に戻る）
   LaunchedEffect(viewModel.outcome) {
     val outcome = viewModel.outcome ?: return@LaunchedEffect
     val current = viewModel.me ?: return@LaunchedEffect
@@ -215,8 +223,13 @@ fun BattleFightComponent(
         if (current.hp > 0) myAnimation = defeat
       }
     }
-    delay(millis(if (outcome == BattleViewModel.Outcome.WON) VICTORY_DURATION else DEFEAT_DURATION))
-    isResultShown = true
+    val resultDelay = when {
+      outcome == BattleViewModel.Outcome.WON -> VICTORY_DURATION
+      onFinish != null -> CAPTURE_FAILED_DURATION
+      else -> DEFEAT_DURATION
+    }
+    delay(millis(resultDelay))
+    if (onFinish != null) onFinish(outcome) else isResultShown = true
   }
 
   Box(Modifier.fillMaxSize()) {
@@ -233,6 +246,9 @@ fun BattleFightComponent(
       danger = viewModel.incomingDanger,
       myDodge = viewModel.lastDodge,
       isFeverActive = viewModel.feverEndsAt != null,
+      arHandoff = arHandoff,
+      // 野生のモンスターとのバトルでは、カメラの映像は捕獲画面が描いているので揺れない
+      // （タップを受ける部分まで揺らすと、タップがスワイプと判定されてしまうので、ほかのものは揺らさない）
       modifier = Modifier
         .fillMaxSize()
         .graphicsLayer { translationX = shake.value.dp.toPx() },
@@ -315,6 +331,10 @@ fun BattleFightComponent(
     AnimatedVisibility(outcome == BattleViewModel.Outcome.WON && !isResultShown, enter = fadeIn(), exit = fadeOut()) {
       VictoryComponent()
     }
+    // 野生のモンスターとのバトルでは、負けたら逃げられる。勝敗の結果の画面の代わりに「捕獲失敗…」を出す
+    AnimatedVisibility(outcome == BattleViewModel.Outcome.LOST && onFinish != null, enter = fadeIn(), exit = fadeOut()) {
+      CaptureFailedComponent(opponent.name)
+    }
     AnimatedVisibility(outcome != null && isResultShown, enter = fadeIn(), exit = fadeOut()) {
       outcome?.let { BattleResultComponent(it, opponent.name, onBack = viewModel::leaveBattle) }
     }
@@ -337,6 +357,8 @@ private const val WEAK_HP_RATIO = 0.2
 /** 確定してから結果を出すまでの時間（秒）。勝ったときは「VICTORY!」を見せ、負けたときは倒れるところを見せる */
 private const val VICTORY_DURATION = 3.5
 private const val DEFEAT_DURATION = 1.2
+/** 野生のモンスターとのバトルで負けたときに、「捕獲失敗…」を見せる時間（秒）。見せ終わったら捕獲画面に戻る */
+private const val CAPTURE_FAILED_DURATION = 3.5
 /** この距離より指を動かしたら、タップではなくスワイプ（よける）にする */
 private val SWIPE_DISTANCE = 30.dp
 

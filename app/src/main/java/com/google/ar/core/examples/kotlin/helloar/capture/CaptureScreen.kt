@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -19,19 +20,34 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.ar.core.examples.kotlin.helloar.battle.BattleHaptic
+import com.google.ar.core.examples.kotlin.helloar.battle.BattleScreen
 import com.google.ar.core.examples.kotlin.helloar.battle.BattleStyle
+import com.google.ar.core.examples.kotlin.helloar.battle.WildBattle
+import com.google.ar.core.examples.kotlin.helloar.battle.ar.ArHandoff
 import com.google.ar.core.examples.kotlin.helloar.battle.battlePanel
 import com.google.ar.core.examples.kotlin.helloar.battle.perform
 import com.google.ar.core.examples.kotlin.helloar.capture.ar.CaptureArComponent
 import com.google.ar.core.examples.kotlin.helloar.model.Monster
+import com.google.ar.core.examples.kotlin.helloar.service.CPUBattleService
+import com.google.ar.core.examples.kotlin.helloar.viewmodel.BattleViewModel
 import com.google.ar.core.examples.kotlin.helloar.viewmodel.CaptureViewModel
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 
 /**
  * AR 捕獲画面（iOS の ARCaptureView）。歩き回るとモンスターが出て、AR で周りを歩く
- * タップすると捕まえて、捕獲成功の画面（MonsterDetailComponent）に切り替わる。「つぎへ」で AR に戻る
+ * タップすると野生のモンスターとのバトル（BattleScreen、相手は CPU）を AR の上に重ねて出す
+ * 勝てば捕獲成功の画面（MonsterDetailComponent）に切り替わり、「つぎへ」で AR に戻る
+ * 負けたら「捕獲失敗…」を見せてから、対戦前に「にげる」を押したらすぐに AR に戻る
+ *
+ * バトルは捕獲画面の AR（ARSceneView）をそのまま使う（CaptureArComponent と ArHandoff を参照）
+ * 外すと AR セッションが閉じ、野生のモンスターがいた場所でバトルできなくなるため
  *
  * AR（ARSceneView）と捕獲成功の画面の 3D（MonsterModelComponent）は、どちらも Filament で描く別々の画面なので、同時に出さない
  * 重ねると、後ろの AR の画面が前に出てしまったり、カメラを取り合ったりすることがある
@@ -39,6 +55,8 @@ import kotlinx.coroutines.delay
  */
 @Composable
 fun CaptureScreen(viewModel: CaptureViewModel) {
+  LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
+  LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { viewModel.pause() }
   val state by viewModel.state.collectAsStateWithLifecycle()
   /** 今出している捕獲成功の画面のモンスター。null なら AR を出す */
   var shownDetail by remember { mutableStateOf<Monster?>(null) }
@@ -64,21 +82,51 @@ fun CaptureScreen(viewModel: CaptureViewModel) {
       isSwitching -> Unit
       detail != null -> MonsterDetailComponent(detail, onClose = viewModel::closeDetail)
       else -> {
-        CaptureArComponent(viewModel, Modifier.fillMaxSize())
-        Text(
-          state.statusMessage,
-          style = BattleStyle.display(18.sp),
-          color = Color.White,
-          textAlign = TextAlign.Center,
-          modifier = Modifier
-            .align(Alignment.TopCenter)
-            .statusBarsPadding()
-            .padding(16.dp)
-            .battlePanel(BattleStyle.cyan),
-        )
+        CaptureArComponent(viewModel, Modifier.fillMaxSize()) { handoff ->
+          state.battleMonster?.let { wild ->
+            // 戦う相手が変わったら（次のバトル）、バトルの状態を作り直す
+            key(wild.id) {
+              WildBattleComponent(
+                wild.monster,
+                handoff,
+                onFinish = { viewModel.finishBattle(won = it == BattleViewModel.Outcome.WON) },
+                onFlee = viewModel::fleeBattle,
+              )
+            }
+          }
+        }
+        // バトルの間は、バトルの画面に重ならないよう案内を出さない
+        if (state.battleMonster == null) {
+          Text(
+            state.statusMessage,
+            style = BattleStyle.display(18.sp),
+            color = Color.White,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+              .align(Alignment.TopCenter)
+              .statusBarsPadding()
+              .padding(16.dp)
+              .battlePanel(BattleStyle.cyan),
+          )
+        }
       }
     }
   }
+}
+
+/**
+ * 野生のモンスターとのバトル。BattleViewModel（相手は wild を渡した CPU）は、この部品が画面にある間だけ持つ
+ * バトルが終わってこの部品が外れたら片付ける（CPU の攻撃も止まる）。次のバトルは新しい BattleViewModel で始める
+ */
+@Composable
+private fun WildBattleComponent(wild: Monster, arHandoff: ArHandoff, onFinish: (BattleViewModel.Outcome) -> Unit, onFlee: () -> Unit) {
+  val owner = rememberViewModelStoreOwner()
+  val battleViewModel: BattleViewModel = viewModel(viewModelStoreOwner = owner) {
+    // BattleViewModel は、片付けたあとに対戦から抜ける（leave）のに、画面より長く動く scope を使う
+    // この部品の scope は片付けと同時に止まるので渡さない。CPU の leave はすぐ終わるので、MainScope を作って渡す
+    BattleViewModel(CPUBattleService(opponent = wild), MainScope())
+  }
+  BattleScreen(battleViewModel, WildBattle(wild, arHandoff, onFinish, onFlee))
 }
 
 /** 前の画面を外してから、次の画面を出すまでの時間（ミリ秒）。AR のカメラやセッションが止まりきるのを待つ */

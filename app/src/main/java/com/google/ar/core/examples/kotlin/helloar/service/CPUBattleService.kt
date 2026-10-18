@@ -19,19 +19,23 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 
 /**
- * ⚠️ 開発用：CPU が相手になる対戦（iOS の CPUBattleService と同じ動き）
- * Supabase の鍵がない（local.properties に書いていない）メンバーでも、バトルの画面を動かせるようにする
- * 削除するときは、BattleActivity の BattleServices.shared で CPUBattleService を選んでいるところも一緒に消す
+ * CPU が相手になる対戦（iOS の CPUBattleService と同じ動き）
+ * 捕獲画面で野生のモンスターと戦うときに使う（相手は opponent に渡したモンスター）
+ * Supabase の鍵がない（local.properties に書いていない）メンバーでも、マルチバトルの画面を動かせるように、本物の対戦相手の代わりにも使う
+ * （マルチバトルで使うのは開発中だけ。BattleActivity の BattleServices.shared を参照）
  *
  * 相手（CPU）は一定の間隔で通常攻撃してくる。必殺技ゲージが溜まったら必殺技を撃つ
  * こちらの必殺技は、ときどきよける
+ *
+ * @param opponent 相手のモンスター。null なら、相手を探すふりをしてからランダムに選ぶ
  */
-class CPUBattleService : BattleService {
+class CPUBattleService(private val opponent: Monster? = null) : BattleService {
   private val scope: CoroutineScope = MainScope()
   /** CPU の行動を流す先。こちらの必殺技に、受けたかよけたかを返すのに使う */
   private var actions: ProducerScope<BattleAction>? = null
 
   override suspend fun findOpponent(monster: Monster): Monster {
+    opponent?.let { return it }
     delay(1_500)
     return Monster.ALL.random()
   }

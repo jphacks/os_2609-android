@@ -6,7 +6,8 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * 対戦相手とのやり取り（iOS の BattleService と同じ 5 つの操作）
- * 本番は SupabaseBattleService、Supabase の鍵がないときは CPUBattleService（CPU が相手）を使う
+ * マルチバトルは SupabaseBattleService、Supabase の鍵がないときは CPUBattleService（CPU が相手）を使う
+ * 捕獲画面の野生のモンスターとのバトルは、いつも CPUBattleService を使う
  */
 interface BattleService {
   /**
