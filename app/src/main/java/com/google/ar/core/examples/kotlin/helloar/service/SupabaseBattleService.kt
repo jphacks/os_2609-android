@@ -47,7 +47,7 @@ import java.util.UUID
 /**
 * Supabase で対戦相手とやり取りする（iOS の SupabaseBattleService と同じ流れ）
 * テーブルと関数の定義は iOS のリポジトリの supabase/schema.sql にある
-* - 相手探し：join_battle 関数を呼ぶ。待っている人がいれば（場所は問わない）入り、いなければ部屋を作って待つ
+* - 相手探し：join_battle 関数を呼ぶ。同じ承諾済みトークンの人がいれば入り、いなければ部屋を作って待つ
 *   待っている間は keep_waiting 関数で、まだ待っていることを定期的に伝える。伝えなくなった部屋には誰も入らない
 * - 行動：battle_actions テーブルに 1 回ずつ番号（seq）を付けて書き込み、相手の書き込みを Realtime で受け取る
 *   相手の行動は番号順に流す。Realtime がつながらない・取りこぼしたときは、2 秒ごとにデータベースを直接見て取り直す
@@ -106,10 +106,11 @@ class SupabaseBattleService(url: String, anonKey: String) : BattleService {
   private var sendJob: Job? = null
   private var didFailToSend = false
 
-  override suspend fun findOpponent(monster: Monster): Monster {
+  override suspend fun findOpponent(monster: Monster, pairingToken: String?): Monster {
+    if (pairingToken.isNullOrBlank()) throw ServiceError.InvalidData()
     leave()
     try {
-      return joinAndWait(monster)
+      return joinAndWait(monster, pairingToken)
     } catch (e: Throwable) {
       // キャンセルされたり失敗したりしたら、作った部屋が相手待ちのまま残らないように片付ける
       // キャンセルされたコルーチンの中で通信すると通信まで取り消されるので、NonCancellable で最後まで行う
@@ -119,12 +120,13 @@ class SupabaseBattleService(url: String, anonKey: String) : BattleService {
   }
 
   /** join_battle で部屋に入り（または作り）、相手がそろうまで待つ */
-  private suspend fun joinAndWait(monster: Monster): Monster {
+  private suspend fun joinAndWait(monster: Monster, pairingToken: String): Monster {
     // 途中でキャンセルされても通信は最後まで行い、部屋の ID を受け取ってから片付けられるようにする
     // （通信ごと取り消すと、サーバーには部屋ができたのに ID がわからず消せなくなる）
     val params = buildJsonObject {
       put("p_player_id", playerID)
       put("p_monster", monster.modelName)
+      put("p_pairing_token", pairingToken)
     }
     val row = withContext(NonCancellable) {
       client.postgrest.rpc("join_battle", params).decodeAs<BattleRow>()
@@ -155,7 +157,10 @@ class SupabaseBattleService(url: String, anonKey: String) : BattleService {
     try {
       // Realtime を取りこぼしたときのために、ときどきデータベースも直接見る（購読を始める前に入ってきた場合もここで気づく）
       var nextFetch = SystemClock.elapsedRealtime()
+      val matchingDeadline = nextFetch + 30_000
       while (opponentMonsterName == null) {
+        // 双方承諾後に相手が終了した場合も、専用の部屋で待ち続けない。
+        if (SystemClock.elapsedRealtime() >= matchingDeadline) throw ServiceError.OpponentLeft()
         if (SystemClock.elapsedRealtime() >= nextFetch) {
           // 通信が一瞬切れても失敗にせず、次の確認を待つ
           orNull { fetchBattle(row.id) }?.let(::receive)

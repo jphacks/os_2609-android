@@ -1,7 +1,7 @@
 # マルチバトルを Android に実装するためのプロンプト
 
 iOS（[jphacks/os_2609-iOS](https://github.com/jphacks/os_2609-iOS)）の「マルチバトル」を Android に移すときに、AI（Claude Code など）に渡した指示です。
-このリポジトリのマルチバトルは、この指示のとおりに作っています。直すときや、ほかの機能を同じように移すときの参考にしてください。
+現在の近接マッチング仕様は [nearby-battle.md](nearby-battle.md) に記載しています。以下は初期実装時の指示です。直すときや、ほかの機能を同じように移すときの参考にしてください。
 
 ---
 
@@ -27,7 +27,7 @@ iOS アプリのマルチバトル（Supabase で、iOS・Android のどちら�
 ### iOS と必ずそろえること（違うと対戦できない・HP が食い違う）
 
 - データベース（テーブル・関数・RLS）は変えない。正は iOS の `supabase/schema.sql`。
-- マッチングは場所を問わない。`join_battle(p_player_id, p_monster)` で入り、部屋を作った側は 3 秒ごとに `keep_waiting(p_battle_id)` を呼ぶ。待つのはキャンセルされるまで（時間切れはない）。
+- マッチングは BLE で近くの受付端末を発見し、`nearby_pair` でペアを確保して双方が承諾してから `join_battle(p_player_id, p_monster, p_pairing_token)` で入る。部屋を作った側は 3 秒ごとに `keep_waiting(p_battle_id)` を呼び、相手待ちは最大30秒。
 - 行動の文字列：`normalAttack` / `specialAttack` / `fever` / `feverAttack` / `takeSpecial` / `dodgeSpecial`。
 - ルールの数値：HP 200、通常攻撃 10、ゲージ +10（100 で必殺技を自動で撃つ）、必殺技 60、よけたら 15、フィーバーは通常攻撃 5 回ごとに抽選・5 秒・2 倍、クールダウン 0.3 秒、予告 1 秒。
 - スタミナ（攻撃・よけるで 20 減り、1 秒に 25 回復、使い切ると 2.5 秒休憩）とクールダウン、フィーバーの時間は入力した端末だけで数える。
@@ -37,14 +37,14 @@ iOS アプリのマルチバトル（Supabase で、iOS・Android のどちら�
 
 ### Android での作り方
 
-- 画面は Jetpack Compose、AR と 3D は SceneView（`io.github.sceneview:arsceneview`）を使う。マップ画面（iOS のタブの代わり）に「マルチバトル」ボタンを置き、`BattleActivity` を開く。
+- 画面は Jetpack Compose、AR と 3D は SceneView（`io.github.sceneview:arsceneview`）を使う。マップ画面（iOS のタブの代わり）に「対戦受付」を置き、双方承諾後に `BattleActivity` を開く。
 - モンスターの 3D モデルは、iOS と同じ Quaternius「Ultimate Monsters」の glTF を glb にまとめて `assets/monsters/` に置く（`scripts/convert_monster_models.py`）。
   捕獲画面の `model.Monster`（Kenney の動物）とは別に、バトル用の `BattleMonster` を作る（`modelName` が iOS と違うと対戦できないため）。
 - アニメーションは glb の中の名前（`Idle`、`Punch` など）で選ぶ。切り替えるときは 0.2 秒混ぜる（iOS の `MonsterAnimator` と同じ使い方にする）。
 - 床が見つかったら、カメラの前 1.1m に自分（左に 0.35m）、2.5m に相手（右に 0.35m）を置いて向かい合わせる。
 - iOS の火花・金色の光の粒は SceneView では出せないので、モンスターの材質を光らせて代わりにする（白：攻撃が当たった、赤の点滅：相手の必殺技の予告、金：フィーバー中）。
 - 効果音はまだ作らない（振動だけ）。
-- Supabase の URL と anon key は `local.properties`（コミットしない）に書く。書いていなければ CPU が相手になる（`CPUBattleService`、⚠️ 開発用）。
+- Supabase の URL と anon key は `local.properties`（コミットしない）に書く。未設定なら近接プレイヤー対戦の受付は開始しない。野生対戦は `CPUBattleService` を使う。
 
 ### 進め方
 

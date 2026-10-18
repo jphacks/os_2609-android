@@ -11,7 +11,7 @@ object SupabaseConfig {
   val url: String = BuildConfig.SUPABASE_URL
   val anonKey: String = BuildConfig.SUPABASE_ANON_KEY
 
-  /** 接続先が書いてあるか。書いていなければ CPU が相手になる */
+  /** 接続先が書いてあるか。未設定なら近接プレイヤー対戦の受付を開始しない */
   val isConfigured: Boolean
     get() = url.isNotEmpty() && anonKey.isNotEmpty()
 }

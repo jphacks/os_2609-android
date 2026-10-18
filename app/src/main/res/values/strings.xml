@@ -18,6 +18,7 @@
   <string translatable="false" name="app_name">HelloAR Kotlin</string>
 
   <string translatable="false" name="open_capture">AR で捕獲する</string>
-  <string translatable="false" name="open_battle">マルチバトル</string>
+  <string translatable="false" name="battle_reception">対戦受付</string>
+  <string translatable="false" name="battle_reception_hint">受付をオンにすると近くの相手を探します</string>
 
 </resources>
