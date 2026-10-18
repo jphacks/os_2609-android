@@ -16,12 +16,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.ar.core.examples.kotlin.helloar.model.battle.BattleMonster
+import com.google.ar.core.examples.kotlin.helloar.model.Monster
+import com.google.ar.core.examples.kotlin.helloar.monster.MonsterModelComponent
 
 /** 対戦前の画面。自分のモンスターを見せ、「バトルする」で対戦相手を探す */
 @Composable
 fun BattleLobbyComponent(
-  myMonster: BattleMonster,
+  myMonster: Monster,
   /** 対戦相手を探している */
   isSearching: Boolean,
   /** 相手探しをやめて、片付けが終わるのを待っている */

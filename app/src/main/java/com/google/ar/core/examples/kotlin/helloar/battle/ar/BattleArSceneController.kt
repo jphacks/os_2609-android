@@ -11,9 +11,11 @@ import com.google.ar.core.Plane
 import com.google.ar.core.Pose
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingState
-import com.google.ar.core.examples.kotlin.helloar.model.battle.BattleMonster
-import com.google.ar.core.examples.kotlin.helloar.model.battle.MonsterAnimation
-import com.google.ar.core.examples.kotlin.helloar.model.battle.MonsterAnimationRequest
+import com.google.ar.core.examples.kotlin.helloar.model.Monster
+import com.google.ar.core.examples.kotlin.helloar.model.MonsterAnimation
+import com.google.ar.core.examples.kotlin.helloar.model.MonsterAnimationRequest
+import com.google.ar.core.examples.kotlin.helloar.monster.MonsterAnimator
+import com.google.ar.core.examples.kotlin.helloar.monster.loadMonsterNode
 import com.google.ar.core.examples.kotlin.helloar.viewmodel.BattleViewModel
 import com.google.android.filament.Engine
 import dev.romainguy.kotlin.math.Float3
@@ -46,8 +48,8 @@ import kotlinx.coroutines.launch
  * @param scope アニメーションを動かすのに使う。Compose の rememberCoroutineScope（毎フレームの時計を持っている）を渡す
  */
 class BattleArSceneController(
-  private val myMonster: BattleMonster,
-  private val opponentMonster: BattleMonster,
+  private val myMonster: Monster,
+  private val opponentMonster: Monster,
   private val engine: Engine,
   private val modelLoader: ModelLoader,
   private val materialLoader: MaterialLoader,
@@ -222,8 +224,8 @@ class BattleArSceneController(
     opponentHome = forward * OPPONENT_DISTANCE + right * SIDE_OFFSET
 
     // モデルの読み込みは時間がかかるので、読み込み終わってから床に置く
-    val me = loadMonster(myMonster, myHeight) ?: return
-    val opponent = loadMonster(opponentMonster, opponentHeight) ?: return
+    val me = loadMonsterNode(engine, modelLoader, myMonster, myHeight) ?: return
+    val opponent = loadMonsterNode(engine, modelLoader, opponentMonster, opponentHeight) ?: return
     for ((holder, home, target) in listOf(Triple(me.first, myHome, opponentHome), Triple(opponent.first, opponentHome, myHome))) {
       holder.position = home
       // モデルは +Z 方向が正面なので、+Z が相手の方を向くように Y 軸で回す
@@ -246,25 +248,6 @@ class BattleArSceneController(
       animator?.play(animation.withoutDelay())
     }
     isPlaced = true
-  }
-
-  /**
-   * モンスターの 3D モデル（glb）を読み込み、高さを合わせる。読み込めなければ null
-   * 返すのは、場所と向きを持つノードと、その中のモデル
-   */
-  private suspend fun loadMonster(monster: BattleMonster, height: Float): Pair<Node, ModelNode>? {
-    val instance = modelLoader.loadModelInstance(monster.modelAssetPath) ?: return null
-    val model = ModelNode(instance, autoAnimate = false)
-    // モデルは 3〜4m の大きさで作られているので、指定の高さになるように縮小する
-    // 腕を横に広げた姿勢で作られていて横幅の方が大きいので、一番長い辺ではなく高さで合わせる
-    val modelHeight = model.extents.y
-    val scale = if (modelHeight > 0) height / modelHeight else 1f
-    model.scale = Scale(scale)
-    // 足元が床に乗るように、モデルの一番下を高さ 0 に合わせる
-    model.position = Position(0f, -(model.center.y - model.halfExtent.y) * scale, 0f)
-    val holder = Node(engine)
-    holder.addChildNode(model)
-    return holder to model
   }
 
   /** 相手のモンスターが画面の外にいたら、その方向を opponentArrowAngle に入れる */
@@ -443,7 +426,7 @@ class BattleArSceneController(
 
   private companion object {
     /**
-     * モンスターの大きさ。現実の大きさ（BattleMonster.size）に掛ける
+     * モンスターの大きさ。現実の大きさ（Monster.size）に掛ける
      * 手前の自分のモンスターは、現実の大きさのままだと画面からはみ出すので小さくする
      * 相手は、自分より大きくして見やすくする
      */

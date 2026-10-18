@@ -1,10 +1,10 @@
-package com.google.ar.core.examples.kotlin.helloar.model.battle
+package com.google.ar.core.examples.kotlin.helloar.model
 
 /**
  * モンスターのモデルに入っているアニメーション（全モンスター共通の 14 種類）
  * glb にはアニメーションが名前付きで別々に入っているので、名前（clipName）で選んで流す
  * （iOS の USDZ は 1 本につないで入れているので区間で切り出すが、Android ではその必要がない）
- * 流すのは MonsterAnimator（battle/ar）が担当する
+ * 流すのは MonsterAnimator（monster/）が担当する
  */
 enum class MonsterAnimation(val clipName: String) {
   /** 倒れる */

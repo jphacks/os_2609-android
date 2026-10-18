@@ -2,7 +2,7 @@ package com.google.ar.core.examples.kotlin.helloar.service
 
 import com.google.ar.core.examples.kotlin.helloar.logic.BattleEngine
 import com.google.ar.core.examples.kotlin.helloar.model.battle.BattleAction
-import com.google.ar.core.examples.kotlin.helloar.model.battle.BattleMonster
+import com.google.ar.core.examples.kotlin.helloar.model.Monster
 import com.google.ar.core.examples.kotlin.helloar.model.battle.Fighter
 import com.google.ar.core.examples.kotlin.helloar.viewmodel.BattleViewModel
 import kotlin.random.Random
@@ -31,9 +31,9 @@ class CPUBattleService : BattleService {
   /** CPU の行動を流す先。こちらの必殺技に、受けたかよけたかを返すのに使う */
   private var actions: ProducerScope<BattleAction>? = null
 
-  override suspend fun findOpponent(monster: BattleMonster): BattleMonster {
+  override suspend fun findOpponent(monster: Monster): Monster {
     delay(1_500)
-    return BattleMonster.ALL.random()
+    return Monster.ALL.random()
   }
 
   override fun opponentActions(): Flow<BattleAction> = callbackFlow {

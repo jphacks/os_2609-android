@@ -1,11 +1,7 @@
 package com.google.ar.core.examples.kotlin.helloar.battle.ar
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -15,8 +11,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,18 +19,16 @@ import com.google.ar.core.examples.kotlin.helloar.battle.BattleHaptic
 import com.google.ar.core.examples.kotlin.helloar.battle.BattleStyle
 import com.google.ar.core.examples.kotlin.helloar.battle.battlePanel
 import com.google.ar.core.examples.kotlin.helloar.battle.perform
-import com.google.ar.core.examples.kotlin.helloar.model.battle.BattleMonster
-import com.google.ar.core.examples.kotlin.helloar.model.battle.MonsterAnimation
-import com.google.ar.core.examples.kotlin.helloar.model.battle.MonsterAnimationRequest
+import com.google.ar.core.examples.kotlin.helloar.model.Monster
+import com.google.ar.core.examples.kotlin.helloar.model.MonsterAnimation
+import com.google.ar.core.examples.kotlin.helloar.model.MonsterAnimationRequest
+import com.google.ar.core.examples.kotlin.helloar.monster.MonsterArrowComponent
 import com.google.ar.core.examples.kotlin.helloar.viewmodel.BattleViewModel
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.rememberARCameraNode
 import io.github.sceneview.rememberEngine
 import io.github.sceneview.rememberMaterialLoader
 import io.github.sceneview.rememberModelLoader
-import kotlin.math.abs
-import kotlin.math.cos
-import kotlin.math.sin
 
 /**
  * バトル画面の AR（iOS の BattleArenaComponent と BattleARViewContainer にあたる）
@@ -46,8 +38,8 @@ import kotlin.math.sin
  */
 @Composable
 fun BattleArComponent(
-  myMonster: BattleMonster,
-  opponentMonster: BattleMonster,
+  myMonster: Monster,
+  opponentMonster: Monster,
   /** 立っている間にくり返すアニメーション（HP が少ないと弱った動きになる） */
   myIdle: MonsterAnimation,
   opponentIdle: MonsterAnimation,
@@ -112,42 +104,7 @@ fun BattleArComponent(
         modifier = Modifier.battlePanel(BattleStyle.cyan),
       )
     }
-    controller.opponentArrowAngle?.let { OffscreenArrowComponent(it) }
+    // 上と下の HP の表示に重ならないよう、端から少し内側に出す
+    controller.opponentArrowAngle?.let { MonsterArrowComponent(it, inset = 120.dp) }
   }
 }
-
-/**
- * 画面の外にいる相手のモンスターの方向を、画面の端の矢印で示す（iOS の MonsterArrow）
- * 上と下の HP の表示に重ならないよう、端から ARROW_INSET 内側に出す
- */
-@Composable
-private fun OffscreenArrowComponent(angle: Float) {
-  BoxWithConstraints(Modifier.fillMaxSize()) {
-    val halfWidth = maxWidth.value / 2 - ARROW_INSET
-    val halfHeight = maxHeight.value / 2 - ARROW_INSET
-    // 真ん中から angle の方向へ伸ばした線が、内側の四角にぶつかる所に置く
-    val dx = cos(angle)
-    val dy = sin(angle)
-    val t = minOf(halfWidth / maxOf(abs(dx), 0.001f), halfHeight / maxOf(abs(dy), 0.001f))
-    Canvas(
-      Modifier
-        .align(Alignment.Center)
-        .offset((dx * t).dp, (dy * t).dp)
-        .size(44.dp),
-    ) {
-      rotate(Math.toDegrees(angle.toDouble()).toFloat()) {
-        val path = Path().apply {
-          moveTo(size.width, size.height / 2)
-          lineTo(0f, 0f)
-          lineTo(size.width * 0.25f, size.height / 2)
-          lineTo(0f, size.height)
-          close()
-        }
-        drawPath(path, BattleStyle.yellow)
-      }
-    }
-  }
-}
-
-/** 矢印を出す位置の、画面の端からの距離（dp） */
-private const val ARROW_INSET = 120f

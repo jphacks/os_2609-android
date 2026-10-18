@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.google.ar.core.examples.kotlin.helloar.model.battle.BattleMonster
+import com.google.ar.core.examples.kotlin.helloar.model.Monster
 import com.google.ar.core.examples.kotlin.helloar.service.MonsterCollection
 
 /**
@@ -18,7 +18,7 @@ class StarterMonsterViewModel(private val collection: MonsterCollection) : ViewM
   companion object {
     /**
      * 最初に選べるモンスター（バニー、フロッグ、バード）。iOS と同じ
-     * どれも BattleMonster.ALL にあるので、candidates は空にならない
+     * どれも Monster.ALL にあるので、candidates は空にならない
      */
     private val CANDIDATE_MODEL_NAMES = listOf("monster-bunny", "monster-frog", "monster-birb")
 
@@ -27,13 +27,13 @@ class StarterMonsterViewModel(private val collection: MonsterCollection) : ViewM
     }
   }
 
-  val candidates = CANDIDATE_MODEL_NAMES.mapNotNull(BattleMonster::named)
+  val candidates = CANDIDATE_MODEL_NAMES.mapNotNull(Monster::named)
 
   /** 手前に出ている（選ばれている）モンスターの番号 */
   var selectedIndex by mutableIntStateOf(0)
     private set
 
-  val selected: BattleMonster
+  val selected: Monster
     get() = candidates[selectedIndex]
 
   /** 次のモンスターを手前に出す。最後まで行ったら最初に戻る */

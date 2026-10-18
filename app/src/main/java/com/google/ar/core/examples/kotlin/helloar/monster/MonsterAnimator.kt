@@ -1,7 +1,7 @@
-package com.google.ar.core.examples.kotlin.helloar.battle.ar
+package com.google.ar.core.examples.kotlin.helloar.monster
 
-import com.google.ar.core.examples.kotlin.helloar.model.battle.MonsterAnimation
-import com.google.ar.core.examples.kotlin.helloar.model.battle.MonsterAnimationRequest
+import com.google.ar.core.examples.kotlin.helloar.model.MonsterAnimation
+import com.google.ar.core.examples.kotlin.helloar.model.MonsterAnimationRequest
 import io.github.sceneview.node.ModelNode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job

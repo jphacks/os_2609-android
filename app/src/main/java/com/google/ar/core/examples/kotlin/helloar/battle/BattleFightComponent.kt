@@ -36,10 +36,10 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.google.ar.core.examples.kotlin.helloar.battle.ar.BattleArComponent
-import com.google.ar.core.examples.kotlin.helloar.model.battle.BattleMonster
+import com.google.ar.core.examples.kotlin.helloar.model.Monster
 import com.google.ar.core.examples.kotlin.helloar.model.battle.Fighter
-import com.google.ar.core.examples.kotlin.helloar.model.battle.MonsterAnimation
-import com.google.ar.core.examples.kotlin.helloar.model.battle.MonsterAnimationRequest
+import com.google.ar.core.examples.kotlin.helloar.model.MonsterAnimation
+import com.google.ar.core.examples.kotlin.helloar.model.MonsterAnimationRequest
 import com.google.ar.core.examples.kotlin.helloar.viewmodel.BattleViewModel
 import kotlin.math.abs
 import kotlinx.coroutines.delay
@@ -57,8 +57,8 @@ fun BattleFightComponent(
   viewModel: BattleViewModel,
   me: Fighter,
   opponent: Fighter,
-  myMonster: BattleMonster,
-  opponentMonster: BattleMonster,
+  myMonster: Monster,
+  opponentMonster: Monster,
 ) {
   /** タップした位置の波紋。クールダウン中でも出るので、タップが届いているかがわかる */
   var tapRipple by remember { mutableStateOf<TapRipple?>(null) }
@@ -359,7 +359,7 @@ private fun idleAnimation(fighter: Fighter): MonsterAnimation =
   if (fighter.hp < fighter.maxHP * WEAK_HP_RATIO) MonsterAnimation.DUCK else MonsterAnimation.IDLE
 
 /** 攻撃する側のアニメーション。必殺技の溜めは、撃ったときに流し始めている */
-private fun attackAnimation(monster: BattleMonster, hit: BattleViewModel.Hit) =
+private fun attackAnimation(monster: Monster, hit: BattleViewModel.Hit) =
   MonsterAnimationRequest(listOf(if (hit.isSpecial) monster.specialAttack else monster.normalAttack))
 
 /**
