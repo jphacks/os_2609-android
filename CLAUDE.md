@@ -32,7 +32,7 @@ app/src/main/java/com/google/ar/core/examples/kotlin/helloar/
 
 ## 野生のモンスターとのバトル（捕獲画面）
 
-- 捕獲画面でモンスターをタップすると、AR の上に `BattleScreen`（相手は `CPUBattleService(opponent)` の CPU）を重ねる。勝てば保存して捕獲成功の画面、負けたら「捕獲失敗…」（`CaptureFailedComponent`）を見せて AR に戻る、対戦前の「にげる」（戻るボタンも同じ）で「〇〇は逃げてしまった…」と出して AR に戻る。対戦中は戻るボタンが効かない。アプリが隠れたら（ホーム・画面を消した）、対戦中でも逃げられたことにする（CPU が隠れている間も攻撃し続けるため）。
+- 捕獲画面でモンスターをタップすると、AR の上に `BattleScreen`（相手は `CPUBattleService(opponent)` の CPU）を重ねる。勝てば保存して捕獲成功の画面、負けたら「捕獲失敗…」（`CaptureFailedComponent`）を見せて AR に戻る、対戦前の「にげる」（戻るボタンも同じ）で「〇〇は逃げてしまった…」と出して AR に戻る。対戦中は戻るボタンが効かない。対戦中にアプリが隠れたら（ホーム・画面を消した）、逃げられたことにする（CPU が隠れている間も攻撃し続けるため）。
 - バトルの画面の作りはマルチバトルと共通で、野生のときだけの違いは `WildBattle` で渡す（iOS の `BattleView.WildBattle` と同じ分け方）。
 - **捕獲画面の AR をそのまま使う（`ArHandoff`）**。iOS は AR セッションをバトルの ARView に渡すが、`ARSceneView` は外から AR セッションを受け取れず、外すとセッションも閉じる。そのためバトル中も捕獲画面の `ARSceneView` を外さず、その中にバトルのモンスターを描く（`CaptureArComponent`）。床を探し直さず、相手を野生のモンスターがいた場所に置ける。
 - 対戦前の画面は、後ろで AR が動いているので 3D（`MonsterModelComponent`）を出さず、名前と VS だけにする（上の「同時に出さない」のため）。

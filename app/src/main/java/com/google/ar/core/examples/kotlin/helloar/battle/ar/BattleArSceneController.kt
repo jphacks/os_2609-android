@@ -203,16 +203,9 @@ class BattleArSceneController(
 
   /**
    * 画面を閉じたときに呼ぶ。アンカーを外す
-   * 野生のモンスターとのバトルでは、モンスターも消す。エンジンは捕獲画面のものでバトルのあとも残るので、
-   * 消さないと、バトルのたびに読み込んだモデルがたまっていく（ほかのプレイヤーとの対戦は、画面ごとエンジンが片付けられる）
+   * モンスターのノードは、AnchorNode が画面から外れるときに SceneView が一緒に消す
    */
   fun stop() {
-    if (wildPosition != null) {
-      for (holder in listOfNotNull(myHolder, opponentHolder)) {
-        anchorNode?.removeChildNode(holder)
-        holder.destroy()
-      }
-    }
     floorAnchor?.detach()
   }
 

@@ -156,7 +156,7 @@ fun BattleFightComponent(
     if (current.hp == 0 || (!hit.isDodged && now >= mySpecialEndsAt)) {
       myAnimation = reactionAnimation(current.hp, hit)
     }
-    // 攻撃を受けたら、画面を揺らす（揺らすものは下の shakeModifier を参照）
+    // 攻撃を受けたら、カメラの映像ごと揺らす（野生のモンスターとのバトルでは揺れない）
     for (x in listOf(-12f, 12f, -6f, 0f)) {
       shake.animateTo(x, tween(50))
     }
@@ -232,10 +232,7 @@ fun BattleFightComponent(
     if (onFinish != null) onFinish(outcome) else isResultShown = true
   }
 
-  // 攻撃を受けたら揺らす。ふだんはカメラの映像ごと揺らすが、野生のモンスターとのバトルでは
-  // カメラの映像は捕獲画面が描いていて揺らせないので、代わりに上に重ねた HP などを揺らす
-  val shakeModifier = Modifier.graphicsLayer { translationX = shake.value.dp.toPx() }
-  Box(Modifier.fillMaxSize().then(if (arHandoff != null) shakeModifier else Modifier)) {
+  Box(Modifier.fillMaxSize()) {
     // 後ろ：AR の床の上で戦うモンスター。攻撃を受けたら揺れる
     BattleArComponent(
       myMonster = myMonster,
@@ -250,9 +247,11 @@ fun BattleFightComponent(
       myDodge = viewModel.lastDodge,
       isFeverActive = viewModel.feverEndsAt != null,
       arHandoff = arHandoff,
+      // 野生のモンスターとのバトルでは、カメラの映像は捕獲画面が描いているので揺れない
+      // （タップを受ける部分まで揺らすと、タップがスワイプと判定されてしまうので、ほかのものは揺らさない）
       modifier = Modifier
         .fillMaxSize()
-        .then(if (arHandoff == null) shakeModifier else Modifier),
+        .graphicsLayer { translationX = shake.value.dp.toPx() },
     )
 
     // 画面のどこをタップしても攻撃する。左右にスワイプするとよける
