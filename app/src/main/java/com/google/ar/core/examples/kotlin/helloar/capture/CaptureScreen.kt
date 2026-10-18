@@ -20,6 +20,8 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -53,6 +55,8 @@ import kotlinx.coroutines.delay
  */
 @Composable
 fun CaptureScreen(viewModel: CaptureViewModel) {
+  LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
+  LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { viewModel.pause() }
   val state by viewModel.state.collectAsStateWithLifecycle()
   /** 今出している捕獲成功の画面のモンスター。null なら AR を出す */
   var shownDetail by remember { mutableStateOf<Monster?>(null) }

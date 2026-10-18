@@ -74,6 +74,7 @@ class CaptureViewModel(private val collection: MonsterCollection) : ViewModel() 
 
   /** 次のモンスターが出るまでに、あと何 m 歩くか。画面には出さないので state に入れない */
   private var remainingWalkDistance = SPAWN_WALK_DISTANCE_RANGE.random()
+  private var isResumed = false
   private var noticeJob: Job? = null
   private var escapeJob: Job? = null
 
@@ -85,9 +86,6 @@ class CaptureViewModel(private val collection: MonsterCollection) : ViewModel() 
         startEscapeTimer()
       }
     } else {
-      noticeJob?.cancel()
-      noticeJob = null
-      _state.update { it.copy(notice = null) }
       // 見えていないうちに逃げると、戻ってきたときに知らせが出ず、いなくなった理由がわからない
       escapeJob?.cancel()
       escapeJob = null
@@ -120,7 +118,9 @@ class CaptureViewModel(private val collection: MonsterCollection) : ViewModel() 
     if (target.id != id) return
     escapeJob?.cancel()
     escapeJob = null
-    _state.update { it.copy(wildMonster = null, battleMonster = target, battleMonsterPosition = position) }
+    noticeJob?.cancel()
+    noticeJob = null
+    _state.update { it.copy(wildMonster = null, battleMonster = target, battleMonsterPosition = position, notice = null) }
   }
 
   /**
@@ -160,10 +160,23 @@ class CaptureViewModel(private val collection: MonsterCollection) : ViewModel() 
     }
   }
 
+  // バックグラウンド中に逃げられた場合も、戻ってからお知らせを読める時間を確保する
+  fun resume() {
+    isResumed = true
+    _state.value.notice?.let(::showNotice)
+  }
+
+  fun pause() {
+    isResumed = false
+    noticeJob?.cancel()
+    noticeJob = null
+  }
+
   private fun showNotice(message: String) {
     // 続けて表示するときは、前の表示を消すタイマーを止めて新しいお知らせに変える
     noticeJob?.cancel()
     _state.update { it.copy(notice = message) }
+    if (!isResumed) return
     noticeJob = viewModelScope.launch {
       delay(NOTICE_DURATION_MS)
       _state.update { it.copy(notice = null) }

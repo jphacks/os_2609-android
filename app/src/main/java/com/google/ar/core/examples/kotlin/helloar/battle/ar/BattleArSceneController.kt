@@ -37,6 +37,7 @@ import kotlin.math.min
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -59,9 +60,14 @@ class BattleArSceneController(
   private val modelLoader: ModelLoader,
   private val materialLoader: MaterialLoader,
   private val cameraNode: ARCameraNode,
-  private val scope: CoroutineScope,
+  scope: CoroutineScope,
   private val wildPosition: Position?,
 ) {
+  // 読み込みや演出を先に止めてから、ノードとモデルを解放する
+  private val sceneJob = Job(scope.coroutineContext[Job])
+  private val scope = CoroutineScope(scope.coroutineContext + sceneJob)
+  private val loadedHolders = mutableListOf<Node>()
+
   /** 床が見つかったら、その上に置くアンカー。BattleArComponent がこれを AnchorNode にして、attach() に渡す */
   var floorAnchor by mutableStateOf<Anchor?>(null)
     private set
@@ -113,6 +119,8 @@ class BattleArSceneController(
 
   /** AR のフレームごとに呼ぶ。床を探し、相手のモンスターの方向を求める */
   fun onSessionUpdated(session: Session, frame: Frame) {
+    // 引き継ぎ時は ARSceneView が捕獲用の ModelLoader だけを更新するため、対戦用も進める
+    modelLoader.updateLoad()
     if (frame.camera.trackingState != TrackingState.TRACKING) return
     cameraPose = frame.camera.pose
     if (floorAnchor == null) {
@@ -203,10 +211,16 @@ class BattleArSceneController(
 
   /**
    * 画面を閉じたときに呼ぶ。アンカーを外す
-   * モンスターのノードは、AnchorNode が画面から外れるときに SceneView が一緒に消す
+   * 捕獲画面の AR は残るので、読み込み途中のノードも含めて対戦の分だけ片付ける
    */
   fun stop() {
+    scope.cancel()
+    loadedHolders.forEach { it.destroy() }
+    loadedHolders.clear()
+    anchorNode?.destroy()
+    anchorNode = null
     floorAnchor?.detach()
+    floorAnchor = null
   }
 
   /**
@@ -260,7 +274,9 @@ class BattleArSceneController(
 
     // モデルの読み込みは時間がかかるので、読み込み終わってから床に置く
     val me = loadMonsterNode(engine, modelLoader, myMonster, myHeight) ?: return
+    loadedHolders.add(me.first)
     val opponent = loadMonsterNode(engine, modelLoader, opponentMonster, opponentHeight) ?: return
+    loadedHolders.add(opponent.first)
     for ((holder, home, target) in listOf(Triple(me.first, myHome, opponentHome), Triple(opponent.first, opponentHome, myHome))) {
       holder.position = home
       // モデルは +Z 方向が正面なので、+Z が相手の方を向くように Y 軸で回す

@@ -14,6 +14,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,7 +37,6 @@ import io.github.sceneview.loaders.ModelLoader
 import io.github.sceneview.math.Position
 import io.github.sceneview.rememberEngine
 import io.github.sceneview.rememberMaterialLoader
-import io.github.sceneview.rememberModelLoader
 
 /**
  * バトル画面の AR（iOS の BattleArenaComponent と BattleARViewContainer にあたる）
@@ -70,7 +70,9 @@ fun BattleArComponent(
 ) {
   // 引き継ぐときは、捕獲画面の ARSceneView のものを使う（arHandoff はこの部品が画面にある間は変わらない）
   val engine = arHandoff?.engine ?: rememberEngine()
-  val modelLoader = arHandoff?.modelLoader ?: rememberModelLoader(engine)
+  // 捕獲画面と読み込み役を分け、対戦が終わったらモデルの元データも解放する
+  val context = LocalContext.current
+  val modelLoader = remember(engine) { ModelLoader(engine, context) }
   val materialLoader = arHandoff?.materialLoader ?: rememberMaterialLoader(engine)
   val cameraNode = arHandoff?.cameraNode ?: rememberARCameraNode(engine)
   val scope = rememberCoroutineScope()
@@ -90,6 +92,7 @@ fun BattleArComponent(
     onDispose {
       arHandoff?.battleScene = null
       controller.stop()
+      modelLoader.destroy()
     }
   }
   // モンスターが現れたら振動させ、画面を見ていなくても気づけるようにする
@@ -139,7 +142,6 @@ fun BattleArComponent(
  */
 class ArHandoff(
   val engine: Engine,
-  val modelLoader: ModelLoader,
   val materialLoader: MaterialLoader,
   val cameraNode: ARCameraNode,
   /** 相手のモンスターを置く場所（ワールド座標、足元）。捕獲画面でそのモンスターがいた場所 */

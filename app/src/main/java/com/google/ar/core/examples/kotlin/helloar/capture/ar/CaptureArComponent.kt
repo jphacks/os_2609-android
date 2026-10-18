@@ -55,7 +55,7 @@ fun CaptureArComponent(
   val battlePosition = state.battleMonsterPosition
   /** バトル中なら、バトルに引き継ぐ AR。バトルが変わるたびに作り直す */
   val handoff = remember(battleMonsterId) {
-    battlePosition?.let { ArHandoff(engine, modelLoader, materialLoader, cameraNode, it) }
+    battlePosition?.let { ArHandoff(engine, materialLoader, cameraNode, it) }
   }
   // ARSceneView に渡す処理の中からは、いつも今の handoff を見る（渡した処理を ARSceneView が作り直さずに使い続けても食い違わない）
   val currentHandoff by rememberUpdatedState(handoff)
