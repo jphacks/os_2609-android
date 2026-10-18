@@ -37,7 +37,7 @@ iOS アプリのマルチバトル（Supabase で、iOS・Android のどちら�
 
 ### Android での作り方
 
-- 画面は Jetpack Compose、AR と 3D は SceneView（`io.github.sceneview:arsceneview`）を使う。今ある HelloAR の画面には「マルチバトル」ボタンだけ置き、`BattleActivity` を開く。
+- 画面は Jetpack Compose、AR と 3D は SceneView（`io.github.sceneview:arsceneview`）を使う。マップ画面（iOS のタブの代わり）に「マルチバトル」ボタンを置き、`BattleActivity` を開く。
 - モンスターの 3D モデルは、iOS と同じ Quaternius「Ultimate Monsters」の glTF を glb にまとめて `assets/monsters/` に置く（`scripts/convert_monster_models.py`）。
   捕獲画面の `model.Monster`（Kenney の動物）とは別に、バトル用の `BattleMonster` を作る（`modelName` が iOS と違うと対戦できないため）。
 - アニメーションは glb の中の名前（`Idle`、`Punch` など）で選ぶ。切り替えるときは 0.2 秒混ぜる（iOS の `MonsterAnimator` と同じ使い方にする）。

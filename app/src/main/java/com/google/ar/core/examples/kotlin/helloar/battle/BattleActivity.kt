@@ -17,7 +17,7 @@ import com.google.ar.core.examples.kotlin.helloar.viewmodel.BattleViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 
-/** マルチバトルの画面。HelloArActivity の「マルチバトル」ボタンから開く */
+/** マルチバトルの画面。マップ画面（MapActivity）の「マルチバトル」ボタンから開く */
 class BattleActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)

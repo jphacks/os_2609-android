@@ -7,7 +7,7 @@ HelloAR（ARCore のサンプル）をもとにしている。マルチバトル
 
 - 作ったときの指示（iOS とそろえること、作り方）：[docs/multi-battle.md](docs/multi-battle.md)
 - **iOS とそろえないと対戦できない**：行動の文字列、ルールの数値、モンスターの `modelName`、データベースの使い方。正は iOS のコードと `supabase/schema.sql`。iOS を変えたら、こちらも同じように変える。
-- 入口：HelloAR の画面の「マルチバトル」ボタン → `battle/BattleActivity`
+- 入口：マップ画面（`map/MapActivity`）の「マルチバトル」ボタン → `battle/BattleActivity`
 
 ```
 app/src/main/java/com/google/ar/core/examples/kotlin/helloar/

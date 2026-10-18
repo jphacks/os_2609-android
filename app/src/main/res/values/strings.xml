@@ -16,23 +16,12 @@
 -->
 <resources>
   <string translatable="false" name="app_name">HelloAR Kotlin</string>
-  <string translatable="false" name="depth_use_explanation">When Depth is enabled on supported devices, virtual objects adapt to the environment by blending in with the real world.</string>
-  <string translatable="false" name="button_text_enable_depth">Enable</string>
-  <string translatable="false" name="button_text_disable_depth">Disable</string>
-  <string translatable="false" name="options_title_with_depth">Your device supports depth</string>
-  <string translatable="false" name="options_title_without_depth">Your device does not support depth</string>
-  <string translatable="false" name="done">Done</string>
-  <string-array translatable="false" name="depth_options_array">
-    <item>Enable depth</item>
-    <item>Show depth map</item>
-  </string-array>
-  <string translatable="false" name="options_title_instant_placement">Instant Placement options</string>
-  <string-array translatable="false" name="instant_placement_options_array">
-    <item>Enable Instant Placement</item>
-  </string-array>
 
-  <string translatable="false" name="searching_planes">Searching for surfaces...</string>
-  <string translatable="false" name="battle_button">マルチバトル</string>
-  <string translatable="false" name="waiting_taps">Tap on a surface to place an object.</string>
+  <string translatable="false" name="open_capture">AR で捕獲する</string>
+  <string translatable="false" name="capture_get">GET!!</string>
+  <string translatable="false" name="capture_success">捕獲成功！</string>
+  <string translatable="false" name="capture_size">大きさ %.1fm</string>
+  <string translatable="false" name="capture_close">つぎへ</string>
+  <string translatable="false" name="open_battle">マルチバトル</string>
 
 </resources>
