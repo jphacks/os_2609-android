@@ -362,15 +362,15 @@ class BattleArSceneController(
     }
   }
 
-  /** 光らせて、終わったら元の光り方（フィーバー中なら金色）に戻す */
+  /**
+   * 光らせて、終わったら元の光り方（フィーバー中なら金色）に戻す
+   * 途中で止められたときは戻さない。次の光が上書きするか、画面ごと閉じられて材質がもうないため（ないものを書き換えると落ちる）
+   */
   private fun glow(model: ModelNode, block: suspend () -> Unit) {
     glowJobs[model]?.cancel()
     glowJobs[model] = scope.launch {
-      try {
-        block()
-      } finally {
-        setEmissive(model, baseEmissive(model))
-      }
+      block()
+      setEmissive(model, baseEmissive(model))
     }
   }
 
@@ -417,18 +417,16 @@ class BattleArSceneController(
     text.position = start
     text.scale = Scale(0.3f)
     anchorNode.addChildNode(text)
+    // 途中で画面が閉じられたときは、シーンごと片付けられるので、ここでは消さない（片付けたあとに消すと落ちる）
     scope.launch {
-      try {
-        // 小さい大きさから、少し大きくなりすぎてから戻る（弾む）
-        animate(DAMAGE_POP_DURATION, ::easeOutBack) { text.scale = Scale(0.3f + 0.7f * it) }
-        animate(DAMAGE_DURATION - DAMAGE_POP_DURATION, ::easeOut) {
-          text.position = start + Float3(0f, DAMAGE_RISE * it, 0f)
-          text.scale = Scale(1f - 0.7f * it * it)
-        }
-      } finally {
-        anchorNode.removeChildNode(text)
-        text.destroy()
+      // 小さい大きさから、少し大きくなりすぎてから戻る（弾む）
+      animate(DAMAGE_POP_DURATION, ::easeOutBack) { text.scale = Scale(0.3f + 0.7f * it) }
+      animate(DAMAGE_DURATION - DAMAGE_POP_DURATION, ::easeOut) {
+        text.position = start + Float3(0f, DAMAGE_RISE * it, 0f)
+        text.scale = Scale(1f - 0.7f * it * it)
       }
+      anchorNode.removeChildNode(text)
+      text.destroy()
     }
   }
 

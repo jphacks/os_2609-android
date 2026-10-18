@@ -183,7 +183,9 @@ class SupabaseBattleService(url: String, anonKey: String) : BattleService {
       watchJob = scope.launch { watch(battleID) }
     }
     // 受け取る側が止まったら（決着した、対戦をやめた）、データベースを見に行くのもやめる
-    awaitClose { endActions() }
+    // 止まるのが遅れて、次の対戦の受け取りがもう始まっていたら、そちらは止めない
+    val producer = this
+    awaitClose { if (actions === producer) endActions() }
   }.buffer(Channel.UNLIMITED)
 
   override fun send(action: BattleAction) {
