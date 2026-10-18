@@ -15,8 +15,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.google.ar.core.examples.kotlin.helloar.HelloArActivity
 import com.google.ar.core.examples.kotlin.helloar.R
+import com.google.ar.core.examples.kotlin.helloar.capture.CaptureActivity
 import com.google.ar.core.examples.kotlin.helloar.model.Location
 import com.google.ar.core.examples.kotlin.helloar.service.BeaconScanner
 import com.google.ar.core.examples.kotlin.helloar.service.BleBeaconScanner
@@ -64,7 +64,7 @@ class MapActivity : AppCompatActivity() {
     indoorMap.locations = Location.REGISTERED
 
     findViewById<Button>(R.id.capture_button).setOnClickListener {
-      startActivity(Intent(this, HelloArActivity::class.java))
+      startActivity(Intent(this, CaptureActivity::class.java))
     }
 
     lifecycleScope.launch {

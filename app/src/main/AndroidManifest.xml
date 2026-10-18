@@ -59,11 +59,11 @@
       </intent-filter>
     </activity>
     <activity
-        android:name="com.google.ar.core.examples.kotlin.helloar.HelloArActivity"
+        android:name="com.google.ar.core.examples.kotlin.helloar.capture.CaptureActivity"
         android:configChanges="orientation|screenSize"
         android:exported="false"
         android:theme="@style/Theme.AppCompat.NoActionBar"
-        android:screenOrientation="locked" />
+        android:screenOrientation="portrait" />
     <!-- Indicates whether "Google Play Services for AR" (ARCore) is "required" or "optional". -->
     <meta-data android:name="com.google.ar.core" android:value="required" />
   </application>
