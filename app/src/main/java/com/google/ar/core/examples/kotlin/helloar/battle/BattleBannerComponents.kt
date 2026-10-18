@@ -126,10 +126,12 @@ fun ChanceComponent(chance: FeverLottery.Chance) {
     slide.animateTo(0f, spring(dampingRatio = 0.7f))
   }
   LaunchedEffect(Unit) {
+    BattleSoundPlayer.play(view.context, BattleSoundPlayer.Sound.ChanceStep(FeverLottery.Level.BLUE))
     for (next in FeverLottery.Level.entries.drop(1)) {
       if (next.ordinal > chance.finalLevel.ordinal) break
       delay(stepMillis)
       level = next
+      BattleSoundPlayer.play(view.context, BattleSoundPlayer.Sound.ChanceStep(next))
       view.perform(if (next == FeverLottery.Level.GOLD) BattleHaptic.HEAVY else BattleHaptic.RIGID)
       // 色が上がるたびに、一瞬大きくなって弾む
       bounce.snapTo(1.12f)
@@ -138,6 +140,7 @@ fun ChanceComponent(chance: FeverLottery.Chance) {
     delay(stepMillis)
     if (!chance.willWin) {
       isBroken = true
+      BattleSoundPlayer.play(view.context, BattleSoundPlayer.Sound.ChanceBreak)
       view.perform(BattleHaptic.ERROR)
     }
   }

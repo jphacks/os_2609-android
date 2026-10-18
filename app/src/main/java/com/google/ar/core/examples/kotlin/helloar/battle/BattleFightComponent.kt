@@ -48,7 +48,7 @@ import kotlinx.coroutines.launch
 /**
  * 対戦中の画面（iOS の BattleFightComponent）。後ろの AR の床の上でモンスター同士が戦い、その上に HP を重ねる
  * 操作は 2 つだけ。画面をタップすると通常攻撃、左右にスワイプするとよける（必殺技とフィーバーは自動）
- * 当たったときの振動、フィーバーのチャンス・フィーバー・相手の必殺技の予告・勝利の演出もここで出す
+ * 当たったときの音と振動、フィーバーのチャンス・フィーバー・相手の必殺技の予告・勝利の演出もここで出す
  * 1 回の対戦の中だけで使う見た目の状態（流すアニメーション、続けて当てた回数など）はここに持つ
  * 対戦が終わるとこの部品ごとなくなるので、次の対戦には前の状態が残らない
  */
@@ -86,10 +86,20 @@ fun BattleFightComponent(
   val scope = rememberCoroutineScope()
   val swipeDistance = with(LocalDensity.current) { SWIPE_DISTANCE.toPx() }
 
-  /** AR の中でモンスターが光るのと同じタイミングで振動させる */
+  /**
+   * AR の中でモンスターが光るのと同じタイミングで、音を鳴らして振動させる
+   * 次の攻撃で取り消さない（通常攻撃が必殺技の溜めの途中で当たっても、必殺技の音を鳴らす）
+   */
   fun playImpact(hit: BattleViewModel.Hit) {
+    val sound = when {
+      hit.isFinishing -> BattleSoundPlayer.Sound.FinishHit
+      hit.isSpecial && !hit.isDodged -> BattleSoundPlayer.Sound.SpecialHit
+      hit.isFever -> BattleSoundPlayer.Sound.FeverHit
+      else -> BattleSoundPlayer.Sound.Hit
+    }
     scope.launch {
       delay(millis(hit.impactDelay))
+      BattleSoundPlayer.play(view.context, sound)
       view.perform(
         when {
           (hit.isSpecial && !hit.isDodged) || hit.isFinishing -> BattleHaptic.HEAVY
@@ -147,6 +157,7 @@ fun BattleFightComponent(
   // 相手が必殺技を撃ったら、結果が決まるまで相手のモンスターが溜める
   LaunchedEffect(viewModel.incomingDanger) {
     if (viewModel.incomingDanger == null) return@LaunchedEffect
+    BattleSoundPlayer.play(view.context, BattleSoundPlayer.Sound.Danger)
     view.perform(BattleHaptic.WARNING)
     opponentSpecialEndsAt = Long.MAX_VALUE
     opponentAnimation = SPECIAL_CHARGE
@@ -162,9 +173,12 @@ fun BattleFightComponent(
     previousIncomingSpecials = incomingSpecials
   }
 
-  // フィーバーが始まったときは成功の振動
+  // フィーバーが始まったときは、音を鳴らして成功の振動
   LaunchedEffect(viewModel.feverEndsAt != null) {
-    if (viewModel.feverEndsAt != null) view.perform(BattleHaptic.SUCCESS)
+    if (viewModel.feverEndsAt != null) {
+      BattleSoundPlayer.play(view.context, BattleSoundPlayer.Sound.FeverStart)
+      view.perform(BattleHaptic.SUCCESS)
+    }
   }
   // よけるためにスワイプしたら軽く振動させ、へとへとになったときと、よけられなかったときはエラーの振動で知らせる
   LaunchedEffect(viewModel.lastDodge) {
@@ -191,6 +205,7 @@ fun BattleFightComponent(
     val defeat = MonsterAnimationRequest(listOf(MonsterAnimation.DEATH), ending = MonsterAnimationRequest.Ending.STAYS_AT_END)
     when (outcome) {
       BattleViewModel.Outcome.WON -> {
+        BattleSoundPlayer.play(view.context, BattleSoundPlayer.Sound.Victory)
         view.perform(BattleHaptic.SUCCESS)
         myAnimation = celebration
         if (currentOpponent.hp > 0) opponentAnimation = defeat
