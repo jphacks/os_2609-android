@@ -4,6 +4,7 @@ import android.opengl.Matrix
 import android.util.Log
 import android.view.MotionEvent
 import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import com.google.ar.core.Anchor
 import com.google.ar.core.Camera
@@ -272,8 +273,8 @@ class CaptureRenderer(
     // 平面の向き（Y 軸まわりの回転）は平面ごとにばらばらなので、回転なしで置き、アンカーの座標の軸をワールドとそろえる
     val center = floor.centerPose
     floorAnchor = session.createAnchor(Pose.makeTranslation(center.tx(), center.ty(), center.tz()))
-    // ViewModel の shownMonsters が変わり、次のフレームからの sync でモンスターが置かれる
-    activity.runOnUiThread { viewModel.floorStateChanged(isFound = true) }
+    // 出現しているモンスターがいれば、次のフレームからの sync で置かれる
+    reportFloor(isFound = true)
   }
 
   /** 見つかっている平面のうち、モンスターを置ける床 */
@@ -321,13 +322,27 @@ class CaptureRenderer(
     floorAnchor = null
     // 位置の基準が変わることがあるので、歩いた距離もそこから測り直す
     lastWalkPoint = null
-    activity.runOnUiThread { viewModel.floorStateChanged(isFound = false) }
+    reportFloor(isFound = false)
   }
 
-  /** ViewModel のモンスター一覧に合わせて、床のモンスターを置いたり消したりする（iOS の sync） */
+  /**
+   * 床が見つかった・なくなったことを ViewModel に伝える
+   * 画面を離れたあとに届いた「見つかった」は捨てる（onPause で見えていない扱いにして、逃げるまでの時間を止めたのを上書きしないため）
+   */
+  private fun reportFloor(isFound: Boolean) = activity.runOnUiThread {
+    if (!isFound || activity.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+      viewModel.floorStateChanged(isFound)
+    }
+  }
+
+  /**
+   * ViewModel の出現しているモンスターに合わせて、床のモンスターを置いたり消したりする（iOS の sync）
+   * 床があるかは ViewModel の isFloorFound ではなく、自分の床のアンカーで決める
+   * isFloorFound はメインスレッドで遅れて変わるので、床を見つけ直した直後に古い値を見て置くと、置き直しが 2 回起きる
+   */
   private fun sync(now: Float) {
     if (floorAnchor == null) return
-    val shown = viewModel.state.value.shownMonsters
+    val shown = listOfNotNull(viewModel.state.value.wildMonster)
     val ids = shown.map { it.id }.toSet()
 
     // 一覧からいなくなったのは、捕まえられたか逃げたモンスター
